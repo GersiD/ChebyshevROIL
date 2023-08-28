@@ -1,0 +1,180 @@
+\NeedsTeXFormat{LaTeX2e}[2005/06/01]
+\ProvidesPackage{mpemath}[2006/11/15]
+
+\newif\ifarticlestyle
+\DeclareOption{articlestyle}{\articlestyletrue}
+
+\ExecuteOptions{}
+\ProcessOptions
+
+%\ifarticlestyle
+%    \RequirePackage[ruled,linesnumbered]{algorithm2e}
+%\else
+%    \RequirePackage[ruled,vlined,linesnumbered,algochapter]{algorithm2e}
+%\fi
+\RequirePackage{amsmath}
+\RequirePackage{amsthm}
+\RequirePackage{amsbsy}
+\RequirePackage{amssymb}
+\RequirePackage{array}
+\RequirePackage{aliascnt}
+\RequirePackage{color}
+\RequirePackage{enumitem}
+\RequirePackage{graphicx}
+\RequirePackage{array}
+%\RequirePackage{arydshln}
+\RequirePackage[american]{babel}
+\RequirePackage{bm}
+
+\definecolor{mydarkblue}{rgb}{0,0.03,0.15}
+
+%\RequirePackage[colorlinks=true, bookmarks=true, pdffitwindow=true, pdfcenterwindow=false, pdffitwindow=true, pdfstartview=FitH, pdfview=FitH, plainpages=false, pdfpagelabels=true, pageanchor=false,hypertexnames=false,linkcolor=mydarkblue,citecolor=mydarkblue,pdfauthor={}]{hyperref}
+
+% ----------------------------------------------------------------
+\vfuzz2pt % Don't report over-full v-boxes if over-edge is small
+\hfuzz2pt % Don't report over-full h-boxes if over-edge is small
+% THEOREMS -------------------------------------------------------
+
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{con}{Conjecture}
+\newtheorem{exm}{Example}
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{asm}{Assumption}
+\theoremstyle{remark}
+\newtheorem{rem}{Remark}
+\newtheorem{fact}{Fact}
+
+% cref names
+%\crefname{prop}{Proposition}{Proposition}
+%\Crefname{prop}{Proposition}{Proposition}
+%
+%\crefname{thm}{Theorem}{Theorem}
+%\Crefname{thm}{Theorem}{Theorem}
+%
+%\crefname{lem}{Lemma}{Lemma}
+%\Crefname{lem}{Lemma}{Lemma}
+%
+%\crefname{defn}{Definition}{Definition}
+%\Crefname{defn}{Definition}{Definition}
+%
+%\crefname{algocf}{Algorithm}{Algorithm}
+%\Crefname{algocf}{Algorithm}{Algorithm}
+%
+%\crefname{AlgoLine}{Line}{Line}
+%\Crefname{AlgoLine}{Line}{Line}
+%
+%\crefname{figure}{Figure}{Figure}
+%\Crefname{figure}{Figure}{Figure}
+%
+%\crefname{exm}{Example}{Example}
+%\Crefname{exm}{Example}{Example}
+
+
+% Logic
+\newcommand{\true}{\operatorname{true}}
+\newcommand{\false}{\operatorname{false}}
+
+% MATH -----------------------------------------------------------
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+\newcommand{\set}[1]{\left\{#1\right\}}
+\newcommand{\opt}{^{\mathnormal{\star}}}
+
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\states}{\mathcal{S}}
+\newcommand{\actions}{\mathcal{A}}
+\newcommand{\RealPlus}{\Real_{+}}
+\newcommand{\Int}{\mathbb{Z}}
+\newcommand{\Natural}{\mathbb{N}}
+\newcommand{\NaturalPlus}{\Natural_{+}}
+
+\newcommand{\eps}{\varepsilon}
+\newcommand{\To}{\longrightarrow}
+\newcommand{\BX}{\bm{B}(X)}
+\newcommand{\measures}{\bm{M}}
+%additional functions
+\newcommand{\Pow}[1]{\mathcal{P}\left(#1\right)}  % Power set
+\newcommand{\E}[1]{\mathbb{E}\left[\, #1 \,\right]}
+\newcommand{\Ex}[2]{\mathbb{E}_{#1}\left[\, #2 \,\right]}
+\renewcommand{\P}[1]{\mathbb{P}\left[ #1 \right]}
+\renewcommand{\Pr}[2]{\mathbb{P}_{#1}\left[\, #2 \,\right]}
+\newcommand{\Var}[1]{\bm{Var}\left[ #1 \right]}
+\newcommand{\Proj}[1]{\bm{P}_{#1}}
+\newcommand{\diag}[1]{\operatorname{diag}\left(#1\right)}
+\newcommand{\cond}{\textrm{if }}
+\newcommand{\tr}{^{\mathsf{T}}}
+\newcommand{\cmp}{^{\mathsf{C}}}
+\newcommand{\dotp}[2]{\langle #1, #2 \rangle}
+
+
+\renewcommand{\ss}{\;\mid\;}
+
+% A possibly better way to handle conditionals is to use
+% \def\<#1|#2>{\mathopen{\left\l�angle\vphantom{#1 #2}\right.} #1
+%    \mathrel{\left|\vphantom{#1 #2}\right.} #2
+%    \mathclose{\left\rangle\vphant�om{#1 #2}\right.}}
+
+\renewcommand{\exp}{\operatorname{exp}}
+\renewcommand{\exp}[1]{\operatorname{exp}\left(#1\right)}
+\newcommand{\I}[1]{\operatorname{\rm I}\left\{ #1 \right\}}
+\renewcommand{\O}[1]{\mbox{O}\left(#1\right)}
+
+%\renewcommand{\eqref}[1]{(\ref{#1})}
+\newcommand{\fromint}[3]{#1 = #2,\ldots,#3}
+
+\newcommand{\clim}{\operatorname{c-lim}}
+\newcommand{\toinf}[1]{#1\rightarrow \infty}
+\newcommand{\ltoinf}[1]{\lim_{#1\rightarrow \infty}}
+\newcommand{\cltoinf}[1]{\clim_{#1\rightarrow \infty}}
+
+% ----------------------------------------------------------------
+% Mathematical program
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\subjectto}{\operatorname{subject\, to} &}
+\newcommand{\minimize}[1]{\operatorname*{minimize}_{#1} &}
+\newcommand{\maximize}[1]{\operatorname*{maximize}_{#1} &}
+
+\theoremstyle{plain}
+% The following is the style with an extra alignment for equalities, as used % % in my thesis:
+%\newenvironment{mathprog}{\begin{equation}\begin{array}{>{\displaystyle}l>{\displaystyle}r>{\displaystyle}l>{\displaystyle}l}}{\end{array}\end{equation}}
+% The following is the style where there is NO extra alignment for equalities, but there % is extra column for quantifications, such as for all i...
+\newenvironment{mprog}{\begin{array}{>{\displaystyle}c>{\displaystyle}l>{\displaystyle}l}}{\end{array}}
+
+%this is a shortcut
+\newcommand{\stc}{\\[1ex] \subjectto}
+\newcommand{\cs}{\\[1ex] & }
+
+% Math
+\newcommand{\pos}[1]{\left[ #1\right]_+}
+\newcommand{\negt}[1]{\left[ #1\right]_-}
+\newcommand{\cspan}[1]{\operatorname{colspan}\left(#1\right)}
+\newcommand{\one}{\bm{1}}
+\newcommand{\zero}{\bm{0}}
+\newcommand{\eye}{\bm{I}}
+
+
+
+% ----------------------------------------------------------------
+%Others
+\newcommand{\mif}{\textrm{ if }}
+%\renewcommand{\baselinestretch}{1.5}
+% to disable the warning: "`Package amsmath Warning; Foreign command \atopwithdelims;"'
+\makeatletter\let\over\@@over
+             \let\atop\@@atop
+             \let\above\@@above
+             \let\overwithdelims\@@overwithdelims
+             \let\atopwithdelims\@@atopwithdelims
+             \let\abovewithdelims\@@abovewithdelims
+             \makeatother
+
+\newcommand{\citeasnoun}[1]{\citeauthor{#1} (\citeyear{#1})}
+% ----------------------------------------------------------------
+
+\newcommand{\todo}[1]{\textcolor{blue}{[[#1]]}}
+
+
+\endinput
