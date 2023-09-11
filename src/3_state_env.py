@@ -10,7 +10,7 @@ class ThreeStateEnv(MDP):
         self.num_actions = 2
         # phi has two columns because im lazy and dont want to change the chebyshev code :/
         self.phi = np.array([[0,1,-1,0,1,-1], [0,0,0,0,0,0]]).T
-        self.num_features = 1 # this is not a typo, the second column is a dummy column
+        self.num_features = 2 # this is not a typo, the second column is a dummy column
         self.P = self.compute_transition()
         self.reward = np.array([0,1,-1,0,1,-1]) # this is iterating by action first for some reason
         self.p_0 = np.array([1,0,0]) # start in state 0
@@ -50,11 +50,11 @@ class ThreeStateEnv(MDP):
 
 def main():
     env = ThreeStateEnv(0.99)
-    # D = [[(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)]] # only show state 1 because this is the ideal state
-    D = [[(2,0), (2,0),(2,0),(2,0),(2,0),(2,0),(2,0),(2,0),(2,0)]] # only show state 2 even though this is not the ideal state
-    # D = [[(2,0)]]
-    # D = [[(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)]] # show what to do in the starting state
-    # D = [[(0,0),(1,0),(2,0),(0,0),(0,0),(0,0),(0,0),(1,0),(1,0)]] # show what to do in all states
+    # D: List[List[Tuple[int,int]]]  = [[(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)]] # only show state 1 because this is the ideal state
+    D: List[List[Tuple[int,int]]] = [[(2,0), (2,0),(2,0),(2,0),(2,0),(2,0),(2,0),(2,0),(2,0)]] # only show state 2 even though this is not the ideal state
+    # D: List[List[Tuple[int,int]]]  = [[(2,0)]]
+    # D: List[List[Tuple[int,int]]]  = [[(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)]] # show what to do in the starting state
+    # D: List[List[Tuple[int,int]]]  = [[(0,0),(1,0),(2,0),(0,0),(0,0),(0,0),(0,0),(1,0),(1,0)]] # show what to do in all states
     print(f"\033[32mOptimal Return = { env.opt_return }\033[0m")
     # print(f"\033[32mOptimal occ_freq = { env.u_E }\033[0m")
     # print(f"\033[32mOptimal policy = { env.occupancy_freq_to_policy(env.u_E) }\033[0m")

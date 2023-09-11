@@ -5,6 +5,7 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 import matplotlib.pyplot as plt
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
+"""Mainly for running experiments and plotting them"""
 
 
 def get_returns_across_methods(env: GridWorld, num_examples: int) -> dict[str, float]:
@@ -16,6 +17,7 @@ def get_returns_across_methods(env: GridWorld, num_examples: int) -> dict[str, f
     num_episodes = int(np.log(num_examples))
     horizon = num_examples // num_episodes
     D = env.generate_demonstrations_from_occ_freq(env.u_E, num_episodes, horizon)
+    # D = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_E, env.u_rand)
 
     # find u for different methods
     returns_list: dict[str, float] = {}
@@ -23,9 +25,13 @@ def get_returns_across_methods(env: GridWorld, num_examples: int) -> dict[str, f
     # add the returns of each u to the list
     returns_list["Chebyshev"] = env.solve_chebyshev_center(D)[2]
     returns_list["LPAL"] = env.solve_syed(D, num_episodes, horizon)[2]
+    # returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
+    # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
+    # returns_list["NBC"] = env.solve_naive_BC(D, num_episodes, horizon)
 
     # optimal return
     returns_list["Optimal"] = env.opt_return
+    # returns_list["Worst"] = env.worst_return
     # random returns
     returns_list["Random"] = env.random_return
     return returns_list
@@ -33,7 +39,7 @@ def get_returns_across_methods(env: GridWorld, num_examples: int) -> dict[str, f
 
 def run_experiments_then_average(
     env: GridWorld, trials: int = 3, episode_len: int = 10
-):
+) -> dict[str, float]:
     runing_total: dict[str, float] = get_returns_across_methods(env, episode_len)
 
     for _ in range(1, trials):
@@ -59,15 +65,15 @@ class Experiment:
         self.env = env
 
     def __call__(self, dataset_size: int):
-        return run_experiments_then_average(self.env, 3, int(dataset_size))
+        return run_experiments_then_average(self.env, 1, int(dataset_size))
 
 
 def plot_experiments_across_dataset_size(env: GridWorld):
     """Given an enviornment this function plots the return of IRL methods asyncronusly"""
     closure = Experiment(env)
     returns_per_DS_size: dict[str, List[float]] = {}
-    with Pool(8) as pool:
-        results = pool.map(closure, np.linspace(10, 100000, 10, dtype=int))
+    with Pool() as pool:
+        results = pool.map(closure, np.linspace(10, 10000, 10, dtype=int))
         for result in results:
             print(result)
             for key, value in result.items():
@@ -87,8 +93,8 @@ def plot_experiments_across_dataset_size(env: GridWorld):
 
 
 def main():
-    # np.random.seed(603)
-    exp_size = 20
+    np.random.seed(603)
+    exp_size = 10
     env = GridWorld(exp_size, 0.99)
     print(f"Running experiment with {exp_size}x{exp_size} gridworld!")
     plot_experiments_across_dataset_size(env)

@@ -2,7 +2,10 @@ from matplotlib.cbook import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from gridworld import GridWorld
+from typing import List, Tuple
 from enum import Enum
+
+from lava_world import LavaWorld
 
 class Action(Enum):
     RIGHT = 0
@@ -14,7 +17,8 @@ class PlotGrid:
     def __init__(self, num_rows: int, gamma: float):
         self.num_rows = num_rows
         self.gamma = gamma
-        self.grid_world = GridWorld(num_rows, gamma)
+        # self.grid_world = GridWorld(num_rows, gamma)
+        self.grid_world = LavaWorld(0.99)
         self.num_states = self.grid_world.num_states
         self.num_actions = self.grid_world.num_actions
         self.rewards = self.grid_world.reward[0:self.num_states].reshape(num_rows, num_rows)
@@ -23,7 +27,6 @@ class PlotGrid:
         self.cmap.set_over("white")
         self.P = self.grid_world.P
         self.D = self.grid_world.generate_demonstrations_from_occ_freq(self.grid_world.u_E, num_rows, num_rows)
-
 
     def gen_x_direction(self, action: int) -> int:
         if action == 0:  # right
@@ -35,7 +38,6 @@ class PlotGrid:
         else:
             raise ValueError(f"Invalid action {action}.")
 
-
     def gen_y_direction(self, action: int) -> int:
         if action == 0 or action == 2:  # right or left respectively
             return 0
@@ -46,13 +48,11 @@ class PlotGrid:
         else:
             raise ValueError(f"Invalid action {action}.")
 
-
     def gen_U_row(self, policy_row: np.ndarray) -> np.ndarray:
         U_row = np.zeros(len(policy_row))
         for action, prob in enumerate(policy_row):
             U_row[action] = prob * self.gen_x_direction(action)
         return U_row
-
 
     def gen_V_row(self, policy_row: np.ndarray) -> np.ndarray:
         V_row = np.zeros(len(policy_row))
@@ -98,7 +98,6 @@ class PlotGrid:
         V = np.apply_along_axis(self.gen_V_row, 1, policy)
         plt.quiver(X, Y, U, V, scale=1.0, units="xy", color="black", width=0.03)
 
-
     def plot(self, policy):
         self.plot_grid()
         self.plot_policy(policy)
@@ -121,21 +120,24 @@ if __name__ == "__main__":
     plot = PlotGrid(num_rows, 0.99)
     env = plot.grid_world
 
-    episodes = 2
-    horizon = 10
+    episodes = 1
+    horizon = 1
     np.random.seed(42)
     D = env.generate_demonstrations_from_occ_freq(env.u_E, episodes, horizon)
+    # D: List[List[Tuple[int,int]]]= [[(10,0), (11,0), (12,0), (13,0), (14, 3), (19,3), (24, 2), (23,2), (22,2), (21,2), (20,3)]]
+    # D: List[List[Tuple[int,int]]]= [[(10,0), (11,0), (12,0), (13,0), (14, 3), (19,3), (24, 2), (23,2), (22,2), (21,2)]]
+    # D: List[List[Tuple[int,int]]]= [[(10,0), (21, 2), (14,3)]]
+    horizon = len(D[0])
     cheb_occ, cheb_rad, cheb_return = env.solve_chebyshev_center(D)
     syed_occ, syed_rad, syed_return = env.solve_syed(D, episodes, horizon)
     print(f"Optimal: {env.opt_return}")
     print(f"Chebyshev: {cheb_return}")
+    print(f"Cheb_rad: {cheb_rad}")
     print(f"Syed: {syed_return}")
     print(f"Random: {env.random_return}")
-    policy = env.occupancy_freq_to_policy(env.u_E)
-    # policy = env.occupancy_freq_to_policy(cheb_occ)
+    # policy = env.occupancy_freq_to_policy(env.u_E)
+    policy = env.occupancy_freq_to_policy(cheb_occ)
     # policy = env.occupancy_freq_to_policy(syed_occ)
     # policy = np.ones((env.num_states, env.num_actions)) / env.num_actions
     # print(policy)
     plot.plot(policy)
-
-
