@@ -38,6 +38,17 @@
 \setlength{\parskip}{3mm plus 1mm minus 1mm}
 \setlength{\parindent}{0pt}
 
+TODO:
+\begin{enumerate}
+    \item LPAL approximation epsilon
+    \item LPAL style bounds: the LPAL bounds should translate to our case
+    \item Nice tabular experimental results
+    \item Polish the writeup
+    \item Max min and continuous 
+\end{enumerate}
+
+\newpage
+
 \title{Robust Inverse Reinforcement Learning Without Homogeneous Trajectories}
 \author{Gersi Doko, Marek Petrik}
 
@@ -80,7 +91,7 @@ Note that given the true reward function this problem would be equivalent to sol
 Like in the work by Abbeel et al. we assume that the true reward function can be written as a linear combination of the features $\Phi$ which are known. 
 The general formulation of the IRL problem is\dots
 \begin{equation} \label{eq:IRL_formulation}
-	\min_{\pi \in \Pi} \max_{r \in \mathcal{R}} (\rho(\pi_e, r) - \rho(\pi, r)),
+	\min_{\pi \in \Pi} \max_{r \in \mathcal{R}} \; (\rho(\pi_e, r) - \rho(\pi, r)),
 \end{equation}
 where $\Pi$ is the set of all policies with $\pi_e \in \Pi$, $\mathcal{R}$ is the set of all reward functions, and $\rho$ is the return of a policy given some reward function. This setting is useful for domains where the reward function is hard to define, but features and demonstrations are available. Such domains include robotics, medicine, and autonomous driving. We will focus on the robust IRL problem, where there is an inner maximization over $\Pi$, see \cref{sec:optimization-formulation}.
 
@@ -92,8 +103,14 @@ We make three main contributions in this work. First, we present a new approach 
 
 The main idea of our approach is to represent the IRL problem as a robust optimization over the policy space and simplify it to a linear program. To this end we employ Chebyshev approximation, and constraint generation. For tabular settings the resulting LP can be solved very efficiently using a commercial solver. For non-tabular MDPs we describe an extension to our method \gersi{which is currently under development}.
 
+\mm{TODO: Next steps: How to combine this with the teaching element? What are the right demonstrations? Good paper to start with is \cite{Brown2018b} }
+
+\mm{Bayesian IRL would also be able to solve the problem with disjoint state action pairs. We need to contrast this with Bayesian IRL}
+
 \paragraph{Notation} $\Delta^{\mathcal{S}}$ is the simplex over the elements of the set $\mathcal{S}$. $\mathcal{A}^{\mathcal{B}}$ represents the set of all functions from $\mathcal{B}$ to $\mathcal{A}$. Similarly, $\Real^N$ where $N$ is a natural number, represents the $N$ dimensional vector space.  If $\mathcal{B}$ is an index set such as $\mathcal{B} = \left\{ 1, \ldots , B \right\}$, we will use $\Real^{\mathcal{B}}$ interchangeably as a space of functions and a space of $B$-dimensional
 vectors.
+
+\section{Related Work}
 
 \section{Preliminaries}\label{sec:preliminaries}
 
@@ -141,7 +158,7 @@ forms of $w$ regularization; $\mathcal{R}_{1+} = \left\{ w \in \Real^K_+
 
 \gersi{We don't talk about R2 in this paper should we keep it here?}
 
-\section{Optimization Formulation}\label{sec:optimization-formulation}
+\section{ROIL Algorithm}\label{sec:optimization-formulation}
 Now we illustrate the robust IRL learning problem as an optimization problem over the policy and reward space. Then we simplify it using occupancy frequencies
 and the fact that the reward function is linearly realizable by $\Phi$. This allows us in the following section to formulate the problem as a linear program.
 
@@ -213,7 +230,8 @@ Observe that given Lemma~\ref{lemma:occ_freq_matching} maximizing over the polic
 Also note that $\rho(\pi,r) = u_{\pi}^T r$ where $u_{\pi}$ is the occupancy frequency of policy $\pi$. This allows us to simplify~\eqref{eq:robust_IRL_formulation} as follows\dots
 
 \begin{equation}
-	\min_{u \in \mathcal{U}} \max_{r \in \mathcal{R}} \max_{v \in \Upsilon} v^T r - u^T r
+	\min_{u \in \mathcal{U}} \max_{r \in \mathcal{R}} \max_{v \in \Upsilon} 
+ \; v^T r - u^T r
 \end{equation}
 
 Next observe that maximizing over $r \in \mathcal{R}$ is equivalent to maximizing over $w \in \mathcal{W}$ since we assume that $r^* = \Phi w^*$.
@@ -285,7 +303,7 @@ the difference between our estimated occupancy frequency $u$ and the experts
 $v$. For those familiar with prior works done by Syed and Schapire~\cite{Syed2008} this is very similar to LPAL and MWAL. 
 However, we show that our formulation is more general and can recover the expert exactly in particular cases.
 
-\section{Solving the Optimization Formulation}
+\subsection{Solving the Optimization Formulation}
 \begin{enumerate}
 	\item Solve the above equation
 	\item Can we show that the problem is NP hard for some choices of the set $\mathcal{R}$? \mm{
@@ -456,7 +474,7 @@ LP formulation of the Chebyshev Center\dots
 	\end{mprog}
 \end{equation}
 
-\section{Analysis}
+\section{Error Bounds}
 
 \mm{Things to show:
 	\begin{enumerate}
@@ -512,12 +530,10 @@ and $\Phi = r^* = [0,0,1,1,-1,-1]$:
 	\end{tikzpicture}
 \end{center}
 
-Solving this MDP yields $u_e = [1,0,\frac{\gamma}{1-\gamma},0,0,0]$, however ROIL fails to find this solution for some datasets.
-While other less involved methods like LPAL~\cite{Syed2008} successfully recover $u_e$ no matter the dataset. Take for example
-$D = [(s_2, a_1)]$, this causes ROIL to find $u = [\frac{1}{2},\frac{1}{2},\frac{\gamma}{2(1-\gamma)},0,\frac{\gamma}{2(1-\gamma)},0]$.
-This example exposes two downsides of ROIL. Firstly, the pessimistic nature of ROIL, it assumes that the expert is trying to maximize the worst-case reward, 
-and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited,
-and therefore what makes a dataset good for LPAL and other occpancy matching methods is not necessarily good for ROIL.
+Solving this MDP yields $u_e = [1,0,\frac{\gamma}{1-\gamma},0,0,0]$, however ROIL fails to find this solution for some datasets. While other less involved methods like LPAL~\cite{Syed2008} successfully recover $u_e$ no matter the dataset. Take for example $D = [(s_2, a_1)]$, this causes ROIL to find $u = [\frac{1}{2},\frac{1}{2},\frac{\gamma}{2(1-\gamma)},0,\frac{\gamma}{2(1-\gamma)},0]$.
+This example exposes two downsides of ROIL. Firstly, the pessimistic nature of ROIL, it assumes that the expert is trying to maximize the worst-case reward, and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited, and therefore what makes a dataset good for LPAL and other occupancy matching methods is not necessarily good for ROIL.
+
+\section{Continuous State Space}
 
 \section{Experimental Results}
 \begin{enumerate}
