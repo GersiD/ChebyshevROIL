@@ -100,6 +100,7 @@ This introduction is not meant to be exhaustive, but rather to provide the reade
 Much of the MDP material comes from~\cite{Puterman1994}. For a more in-depth treatment of the IRL setting we refer the reader to~\cite{abbeel2004}.
 
 \paragraph{MDP}
+\gersi{Something smart}
 The domain is modeled as a Markov Decision Process with a finite number of states $\mathcal{S} = \left\{ 1, \dots , S \right\}$ and a finite number of actions $\mathcal{A} = \left\{ 1, \dots , A \right\}$. The transition probability function $p\colon \mathcal{S} \times \mathcal{A} \to \Delta^{\mathcal{S}}$ is known. The true reward function $r\opt \colon \mathcal{S} \times \mathcal{A} \to \Real$ is unknown, and we learn it from data. The set of possible reward functions is denoted as $\mathcal{R} \subseteq \Real^{\mathcal{S} \times \mathcal{A}}$. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_R \cup \Pi_D$.
 
 We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. 
