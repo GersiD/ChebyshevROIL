@@ -81,16 +81,31 @@ def plot_experiments_across_dataset_size(env: GridWorld):
                 returns_per_DS_size[key].append(value)
 
     # We start plotting
+    # Set the font type to TrueType
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['ps.fonttype'] = 42
+    # set the font to be Computer Modern (cmr10 doesnt work so we use serif)
+    plt.rcParams["font.family"] = "serif"
+    markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     dataset_size = returns_per_DS_size.pop("dataset_size", None)
     for key, value in returns_per_DS_size.items():
-        plt.plot(dataset_size, value, label=key)
+        plt.plot(dataset_size, value, label=key, marker=markers.pop(0))
     plt.xlabel("Dataset Size")
     plt.ylabel("Average Return")
     plt.title(f"{env.num_rows} x {env.num_rows} Gridworld Experiment gamma={env.gamma}")
-    plt.legend()
+    # Move legend to outside of plot
+    plt.legend(loc="lower right")
+    plt.grid()
+    # plt.show()
     plt.savefig(f"plots/{env.num_rows}x{env.num_rows}_gridworld.png")
+    plt.savefig(f"plots/pdfs/{env.num_rows}x{env.num_rows}_gridworld.pdf")
     # plt.show()
 
+def plot_experiments_across_env_size(env_sizes: List[int]):
+    for env_size in env_sizes:
+        print(f"Running experiment with {env_size}x{env_size} gridworld!")
+        env = GridWorld(env_size, 0.99)
+        plot_experiments_across_dataset_size(env)
 
 def main():
     np.random.seed(603)
@@ -98,6 +113,8 @@ def main():
     env = GridWorld(exp_size, 0.99)
     print(f"Running experiment with {exp_size}x{exp_size} gridworld!")
     plot_experiments_across_dataset_size(env)
+    # if you want to run multiple experiments
+    # plot_experiments_across_env_size([5, 10, 20, 30, 40])
 
 
 if __name__ == "__main__":
