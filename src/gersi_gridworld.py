@@ -25,8 +25,8 @@ def get_returns_across_methods(env: GridWorld, num_examples: int) -> dict[str, f
     # add the returns of each u to the list
     returns_list["Chebyshev"] = env.solve_chebyshev_center(D)[2]
     returns_list["LPAL"] = env.solve_syed(D, num_episodes, horizon)[2]
-    # returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
-    # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
+    returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
+    returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
     # returns_list["NBC"] = env.solve_naive_BC(D, num_episodes, horizon)
 
     # optimal return
@@ -98,6 +98,7 @@ def plot_experiments_across_dataset_size(env: GridWorld):
     plt.grid()
     # plt.show()
     plt.savefig(f"plots/{env.num_rows}x{env.num_rows}_gridworld.pdf")
+    plt.clf()
     # plt.show()
 
 def plot_experiments_across_env_size(env_sizes: List[int]):

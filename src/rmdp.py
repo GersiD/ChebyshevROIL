@@ -339,7 +339,7 @@ class MDP(object):
 
         # Add constraints for u \in U
         model.addMConstr(W.T, u, "==", p_0)
-        # model.addConstr(c.T@ u == 0) # Constrain u to lie within Upsilon
+        model.addConstr(c.T@ u == 0) # Constrain u to lie within Upsilon
 
         # setting the objective
         model.setObjective(sigma, GRB.MINIMIZE)
