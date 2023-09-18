@@ -45,12 +45,12 @@
 \maketitle
 
 \begin{abstract}
-    \begin{enumerate}
-        \item What is the problem we address and what is the limitation of earlier work?
-        \item Not enough data to estimate occupancy frequencies reliably, estimation error, a lot of data is needed to reliably learn.
-        \item Expert demonstrators may bias demonstrations to the most informative states to demonstrate challenging or difficult states leading to an incorrect estimate
-        \item This paper proposes this kind of approach. How is this new and better?
-    \end{enumerate}
+	\begin{enumerate}
+		\item What is the problem we address and what is the limitation of earlier work?
+		\item Not enough data to estimate occupancy frequencies reliably, estimation error, a lot of data is needed to reliably learn.
+		\item Expert demonstrators may bias demonstrations to the most informative states to demonstrate challenging or difficult states leading to an incorrect estimate
+		\item This paper proposes this kind of approach. How is this new and better?
+	\end{enumerate}
 \end{abstract}
 
 % \section{TODO}
@@ -72,10 +72,10 @@
 % \end{enumerate}
 
 Inverse Reinforcement Learning~(IRL) is a type of imitation learning that seeks to learn an expert's policy from a set of demonstrations demonstrations~\cite{chang2021mitigating}
-\mm{good to cite a broader range of work including some recent papers}. 
+\mm{good to cite a broader range of work including some recent papers}.
 Note that given the true reward function this problem would be equivalent to solving a Markov Decision Process (MDP)~\cite{Puterman1994}.
 
-We assume that the true reward function can be written as a linear combination of the features $\Phi$ which are known. 
+We assume that the true reward function can be written as a linear combination of the features $\Phi$ which are known.
 The general formulation of the IRL problem is\dots
 \begin{equation} \label{eq:IRL_formulation}
 	\min_{\pi \in \Pi} \max_{r \in \mathcal{R}} \; (\rho(\pi_e, r) - \rho(\pi, r)),
@@ -100,13 +100,12 @@ This introduction is not meant to be exhaustive, but rather to provide the reade
 Much of the MDP material comes from~\cite{Puterman1994}. For a more in-depth treatment of the IRL setting we refer the reader to~\cite{abbeel2004}.
 
 \paragraph{MDP}
-\gersi{Something smart}
 The domain is modeled as a Markov Decision Process with a finite number of states $\mathcal{S} = \left\{ 1, \dots , S \right\}$ and a finite number of actions $\mathcal{A} = \left\{ 1, \dots , A \right\}$. The transition probability function $p\colon \mathcal{S} \times \mathcal{A} \to \Delta^{\mathcal{S}}$ is known. The true reward function $r\opt \colon \mathcal{S} \times \mathcal{A} \to \Real$ is unknown, and we learn it from data. The set of possible reward functions is denoted as $\mathcal{R} \subseteq \Real^{\mathcal{S} \times \mathcal{A}}$. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_R \cup \Pi_D$.
 
-We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. 
-The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$. 
-An important fact that we will need to develop our algorithms is the well-known connection between the occupancy frequencies and policies. 
-For any policy $\pi\in\Pi_R$ and an initial distribution $p_0\in \Delta^{\mathcal{S}}$, there exists an occupancy frequency $u\in \Real^{\mathcal{S}\mathcal{A}}$. 
+We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$.
+The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$.
+An important fact that we will need to develop our algorithms is the well-known connection between the occupancy frequencies and policies.
+For any policy $\pi\in\Pi_R$ and an initial distribution $p_0\in \Delta^{\mathcal{S}}$, there exists an occupancy frequency $u\in \Real^{\mathcal{S}\mathcal{A}}$.
 The space of occupancy frequencies for all $\pi\in \Pi_R$ and a fixed initial distribution $p_0$ is denoted as $\mathcal{U}$
 and is discussed in depth in~\cite{Puterman1994}:
 \[
@@ -157,7 +156,7 @@ We only observe $\pi_e \in \Pi_D$ through its demonstrations $\mathcal{D}$. Ther
 \end{equation}
 
 Note that if a randomized policy were used to generate the demonstrations in
-$\mathcal{D}$, then the set $\Pi(\mathcal{D})$ may be empty. We want to be robust with respect to the policies which mimic $\pi_e$. 
+$\mathcal{D}$, then the set $\Pi(\mathcal{D})$ may be empty. We want to be robust with respect to the policies which mimic $\pi_e$.
 We now turn to the robust IRL problem as an optimization which fulfills our needs\dots
 
 \begin{equation}
@@ -179,11 +178,11 @@ Let $c \in \Real^{SA}$ such that $c(s,a) = 1$ if $(s,a) \notin \mathcal{D}$ and 
 	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid c\tr u = 0  \right\}~.
 \end{equation}
 
-This set constrains occupancy frequencies to 0 only for the state-action pairs in which the state was observed, but the action was not. 
+This set constrains occupancy frequencies to 0 only for the state-action pairs in which the state was observed, but the action was not.
 This constraint penalizes policies which are inconsistent with the demonstrations.
 
 \begin{proposition}\label{prop:convexity_of_Upsilon}
-	$\Upsilon$ is convex, closed, and polyhedral. 
+	$\Upsilon$ is convex, closed, and polyhedral.
 \end{proposition}
 
 \begin{proof}
@@ -281,7 +280,7 @@ This is done to reduce the optimization problem and improve efficiency.
 The equation in~\eqref{eq:extreme_points_of_the_IRL_Formulation} can be seen as
 finding the feature-vector which points in the same SA-dimensional direction as
 the difference between our estimated occupancy frequency $u$ and the experts
-$v$. For those familiar with prior works done by Syed and Schapire~\cite{Syed2008} this is very similar to LPAL and MWAL. 
+$v$. For those familiar with prior works done by Syed and Schapire~\cite{Syed2008} this is very similar to LPAL and MWAL.
 However, we show that our formulation is more general and can recover the expert exactly in particular cases.
 
 \section{Solving the Optimization Formulation}
@@ -509,7 +508,7 @@ and $\Phi = r^* = [0,0,1,1,-1,-1]$:
 Solving this MDP yields $u_e = [1,0,\frac{\gamma}{1-\gamma},0,0,0]$, however ROIL fails to find this solution for some datasets.
 While other less involved methods like LPAL~\cite{Syed2008} successfully recover $u_e$ no matter the dataset. Take for example
 $D = [(s_2, a_1)]$, this causes ROIL to find $u = [\frac{1}{2},\frac{1}{2},\frac{\gamma}{2(1-\gamma)},0,\frac{\gamma}{2(1-\gamma)},0]$.
-This example exposes two downsides of ROIL. Firstly, the pessimistic nature of ROIL, it assumes that the expert is trying to maximize the worst-case reward, 
+This example exposes two downsides of ROIL. Firstly, the pessimistic nature of ROIL, it assumes that the expert is trying to maximize the worst-case reward,
 and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited,
 and therefore what makes a dataset good for LPAL and other occpancy matching methods is not necessarily good for ROIL.
 
@@ -555,8 +554,8 @@ for each $\pi \in \Pi$ where $u^{\pi}$ is the occupancy frequency of the policy 
 
 	\[\pi(a|s) = \frac{u(s,a)}{\sum_{a`}u(s,a`)}\]
 
-	Since $u \in \Upsilon (\mathcal{D})$, $u\tr c = 0$ for some $c \in \Real^{SA}$ such that 
-	$c(s,a) = 1$ if $(s,\cdot) \in \mathcal{D}, (s,a) \notin \mathcal{D}$ and $c(s,a) = 0$ otherwise. 
+	Since $u \in \Upsilon (\mathcal{D})$, $u\tr c = 0$ for some $c \in \Real^{SA}$ such that
+	$c(s,a) = 1$ if $(s,\cdot) \in \mathcal{D}, (s,a) \notin \mathcal{D}$ and $c(s,a) = 0$ otherwise.
 	Therefore, for states $s$ where $(s,\cdot) \in \mathcal{D}$ we have $u(s,a) = 0$ for all $a \not= \pi_e(s)$.
 	Only one action for that state will be non-zero, therefore for observed states we have $\pi(a|s) = 1$.
 
@@ -620,7 +619,7 @@ policy consistent with the demonstrations $\mathcal{D}$. That is,
 
 \paragraph{Relationship With LPAL, Syed and Schapire~\cite{Syed2008}}
 
-Theorem 5 of the LPAL paper~\cite{Syed2008} provides a bound on the performance of the policy returned by LPAL. 
+Theorem 5 of the LPAL paper~\cite{Syed2008} provides a bound on the performance of the policy returned by LPAL.
 In this section we would like to provide insight into this bound using the notation of this paper\dots
 
 \begin{theorem}[LPAL Bound]
