@@ -97,8 +97,7 @@ def plot_experiments_across_dataset_size(env: GridWorld):
     plt.legend(loc="lower right")
     plt.grid()
     # plt.show()
-    plt.savefig(f"plots/{env.num_rows}x{env.num_rows}_gridworld.png")
-    plt.savefig(f"plots/pdfs/{env.num_rows}x{env.num_rows}_gridworld.pdf")
+    plt.savefig(f"plots/{env.num_rows}x{env.num_rows}_gridworld.pdf")
     # plt.show()
 
 def plot_experiments_across_env_size(env_sizes: List[int]):
