@@ -580,8 +580,7 @@ class MDP(object):
             theta_cur -= learning_rate * grad_theta
             # prior_obj = self.obj(theta_cur)
             # learning_rate *= 0.99
-
-        return self.verify_theta_return(theta_cur)
+        return self.verify_theta_return(theta_cur) # This takes a long time to compute
 
     def solve_BC(self, D_e: List[List[Tuple[int,int]]], episodes:int, horizon:int) -> float:
         phi = self.phi_SxAK
