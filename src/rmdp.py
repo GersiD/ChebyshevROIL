@@ -522,7 +522,10 @@ class MDP(object):
         return count
 
     def verify_theta_return(self, theta: np.ndarray) -> float:
-        utheta = self.u_theta_matrix(theta)
+        """Compute the return of a given parameter vector theta
+        theta : vector of a parameterized policy
+        returns a float"""
+        utheta = self.u_theta_matrix(theta) # Solves for the occupancy frequency from a linear system of eqs
         ret = 0.0
         for s in self.states:
             for a in self.actions:
@@ -545,7 +548,7 @@ class MDP(object):
         # u_e = self.u_E
         # prior_obj = self.obj(theta_cur)
         # while(prior_obj > 0.001 and iteration < 10):
-        for _ in range(10):
+        for _ in range(100):
             D_theta = self.generate_samples_from_sigmoid_policy(theta_cur, 1, horizon)
             u_theta = self.u_hat_all(D_theta)
             # u_theta = self.u_theta_matrix(theta_cur)
@@ -605,14 +608,14 @@ class MDP(object):
         u_bc = self.occ_freq_from_P_pi(self.P_pi(pi), pi)
         return u_bc.reshape(self.num_states*self.num_actions, order="F") @ self.reward
 
-    def solve_naive_BC(self, D_e: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> float:
+    def solve_naive_BC(self, D_e: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> Tuple[np.ndarray, float]:
         """Solve the occupancy frequency cloning formulation
         returns a float"""
         u_e = self.u_hat_all(D_e)
         pi_mat = self.occupancy_freq_to_policy(u_e)
         pi = lambda s: pi_mat[s,:]
         u = self.occ_freq_from_P_pi(self.P_pi(pi), pi)
-        return u.reshape(self.num_states*self.num_actions, order="F") @ self.reward
+        return u, u.reshape(self.num_states*self.num_actions, order="F") @ self.reward
 
     def solve_worst(self) -> Tuple[np.ndarray, float]:
         """Solve the worst-case bellman flow problem
