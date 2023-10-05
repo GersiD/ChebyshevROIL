@@ -46,7 +46,7 @@ def plot_return_diffs(plotter: Plotter):
     for column in plotter.df.columns:
         if column not in ignore_columns:
             plt.scatter(x_axis, plotter.df["Optimal"] - plotter.df[column], label=column, marker=markers.pop())
-    plt.xlabel("||u_E - u_pi||_inf")
+    plt.xlabel("||u_E - u_E_hat||_inf")
     plt.ylabel("rho(u_E) - rho(u_pi)")
     plt.title(f"Regret vs Epsilon : {plotter.filename}")
     # Move legend to outside of plot
