@@ -41,7 +41,7 @@ def plot_returns(plotter: Plotter):
 def plot_return_diffs(plotter: Plotter):
     """Plots rho(u_E) - rho(u_pi) for each method"""
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
-    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC", "Random"]
     x_axis = plotter.df["EstLInfDiff"]
     for column in plotter.df.columns:
         if column not in ignore_columns:
@@ -61,7 +61,7 @@ def for_each_dataset(fun: Callable):
     for filename in os.listdir("datasets/"):
         if filename.endswith(".csv"):
             fname = filename.split(".")[0] # remove the .csv
-            print(f"Plotting {fname}")
+            print(f"Processing {fname}")
             fun(Plotter(fname, pd.read_csv(f"datasets/{filename}")))
 
 def main():
