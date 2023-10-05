@@ -23,7 +23,6 @@ class Plotter(object):
 
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    # We start plotting
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC"]
     dataset_size = plotter.df["dataset_size"]
@@ -41,13 +40,12 @@ def plot_returns(plotter: Plotter):
 
 def plot_return_diffs(plotter: Plotter):
     """Plots rho(u_E) - rho(u_pi) for each method"""
-    # We start plotting
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC"]
     x_axis = plotter.df["EstLInfDiff"]
     for column in plotter.df.columns:
         if column not in ignore_columns:
-            plt.plot(x_axis, plotter.df["Optimal"] - plotter.df[column], label=column, marker=markers.pop())
+            plt.scatter(x_axis, plotter.df["Optimal"] - plotter.df[column], label=column, marker=markers.pop())
     plt.xlabel("||u_E - u_pi||_inf")
     plt.ylabel("rho(u_E) - rho(u_pi)")
     plt.title(f"Regret vs Epsilon : {plotter.filename}")
