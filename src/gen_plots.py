@@ -39,6 +39,24 @@ def plot_returns(plotter: Plotter):
     plt.savefig(f"plots/returns/{plotter.filename}_returns.pdf")
     plt.clf()
 
+def plot_return_diffs(plotter: Plotter):
+    """Plots rho(u_E) - rho(u_pi) for each method"""
+    # We start plotting
+    markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC"]
+    x_axis = plotter.df["EstLInfDiff"]
+    for column in plotter.df.columns:
+        if column not in ignore_columns:
+            plt.plot(x_axis, plotter.df["Optimal"] - plotter.df[column], label=column, marker=markers.pop())
+    plt.xlabel("||u_E - u_pi||_inf")
+    plt.ylabel("rho(u_E) - rho(u_pi)")
+    plt.title(f"Regret vs Epsilon : {plotter.filename}")
+    # Move legend to outside of plot
+    plt.legend(loc="lower right")
+    plt.grid()
+    plt.savefig(f"plots/return_diffs/{plotter.filename}_return_diffs.pdf")
+    plt.clf()
+
 def for_each_dataset(fun: Callable):
     """Loop over each dataset in the datasets/ directory and apply fun to it,
     fun must take a Plotter object as its argument"""
@@ -49,7 +67,10 @@ def for_each_dataset(fun: Callable):
             fun(Plotter(fname, pd.read_csv(f"datasets/{filename}")))
 
 def main():
-    for_each_dataset(plot_returns)
+    # plot returns
+    # for_each_dataset(plot_returns)
+    # plot return_diffs
+    for_each_dataset(plot_return_diffs)
 
 if __name__ == "__main__":
     main()
