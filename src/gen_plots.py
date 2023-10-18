@@ -1,10 +1,6 @@
 from typing import Callable
 import matplotlib.pyplot as plt
 import os
-from typing import List
-from gridworld import GridWorld
-import numpy as np
-from concurrent.futures import ProcessPoolExecutor as Pool
 import pandas as pd
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
