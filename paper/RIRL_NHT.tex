@@ -512,13 +512,8 @@ This example exposes two downsides of ROIL. Firstly, the pessimistic nature of R
 and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited,
 and therefore what makes a dataset good for LPAL and other occpancy matching methods is not necessarily good for ROIL.
 
-\paragraph{Visual representation of ROIL}
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.45\textwidth]{../src/plots/returns/10x10_gridworld_off_policy_returns.pdf}
-	\caption{10x10 grid world with off policy demonstrations}
-	\label{fig:10x10_gridworld_off_policy_returns}
-\end{figure}
+\paragraph{Visual Representation of ROIL}
+% TODO: add visuals from the notebook
 
 \section{Experimental Results}
 \begin{enumerate}
@@ -526,6 +521,22 @@ and therefore what makes a dataset good for LPAL and other occpancy matching met
 	\item Discuss whether our algorithm meets its analytical results.
 	\item Demonstrate its performance on up-to-date sandboxes.
 \end{enumerate}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/20x20_gridworld_on_policy_returns.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/20x20_gridworld_off_policy_returns.pdf}
+	\caption{On and off policy performance of IRL methods on 20x20 grid world}
+	\label{fig:off_policy_vs_on_20}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_on_policy_returns.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_off_policy_returns.pdf}
+	\caption{On and off policy performance of IRL methods on 40x40 grid world}
+	\label{fig:off_policy_vs_on_40}
+\end{figure}
 
 \section{Conclusion}
 \begin{enumerate}
