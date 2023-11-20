@@ -32,19 +32,19 @@ def get_U_xi(xi, gamma):
 def JSD(p, q):
     """Compute the Jensen-Shannon Divergence between two probability distributions"""
     m = 0.5 * (p + q)
-    return 0.5 * (special.kl_div(p, m) + special.kl_div(q, m))
+    return 0.5 * (special.kl_div(p, m) + special.kl_div(q, m)).sum()
 
 def generate_losses(env: MDP):
     # The following assumes the following Dataset
     D = [(0,0), (1,0)]
     u_hat = (1/(1-env.gamma))*np.array([0.5,0.5,0,0])
     xi_list = np.arange(0.0, 1.0, 0.001)
-    linf_error = []
-    djs_list = []
-    for xi in xi_list:
+    linf_error = np.zeros(len(xi_list))
+    djs_list = np.zeros(len(xi_list))
+    for i, xi in enumerate(xi_list):
         u_xi = get_U_xi(xi, env.gamma)
-        linf_error.append(np.linalg.norm(u_xi - u_hat, ord=np.inf))
-        djs_list.append(JSD((1/(1-env.gamma))*u_xi, (1/(1-env.gamma))*u_hat))
+        linf_error[i] = np.linalg.norm(u_xi - u_hat, ord=np.inf)
+        djs_list[i] = JSD((1/(1-env.gamma))*u_xi, (1/(1-env.gamma))*u_hat)
     return xi_list, linf_error, djs_list
 
 def plot_lpal_error(env: MDP):
