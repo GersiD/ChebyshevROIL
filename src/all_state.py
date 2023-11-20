@@ -31,7 +31,7 @@ def get_U_xi(xi, gamma):
 def plot_lpal_error(env: MDP):
     D = [(0,0), (1,0)]
     u_hat = (1/(1-env.gamma))*np.array([0.5,0.5,0,0])
-    xi_list = np.arange(0.0, 1.0, 0.01)
+    xi_list = np.arange(0.0, 1.0, 0.001)
     linf_error = []
     for xi in xi_list:
         u_xi = get_U_xi(xi, env.gamma)
