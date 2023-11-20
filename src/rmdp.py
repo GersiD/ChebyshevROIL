@@ -43,7 +43,8 @@ class MDP(object):
         self.phi_gail = self.compute_phi_gail()
         # Phi matrix for BC \in S x (AxK)
         self.BC_num_features = 5
-        self.phi_SxAK = self.compute_phi_S_AK()
+        if self.num_actions == 4:
+         self.phi_SxAK = self.compute_phi_S_AK()
 
         # Stacked (I - gamma P_a)
         self.IGammaPAStacked = self.construct_design_matrix()
