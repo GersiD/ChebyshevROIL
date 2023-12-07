@@ -196,7 +196,7 @@ Recall the IRL objective.
 \end{equation}
 
 We only observe $\pi_e \in \Pi_D$ through its demonstrations $\mathcal{D}$. Therefore, we define a set of randomized policies that are consistent with $\mathcal{D}$.
-\mm{Do NOT leave an empty line before an equation. It starts a new paragraph. If you want to have a space in the source, use a comment as I do in the equation below.}
+%
 \begin{equation} \label{eq:consistent-policies}
 	\Pi_R(\mathcal{D}) = \left\{ \pi \in \Pi_R \mid \pi(s,a) = 1, \, \forall (s,a) \in \mathcal{D} \right\}~.
 \end{equation}
@@ -244,13 +244,13 @@ The following lemma states the correctness of the construction of the occupancy 
 
 Observe that given Lemma~\ref{lemma:occ_freq_matching} maximizing over the policy space is equivalent to maximizing over the occupancy frequency space.
 Also note that $\rho(\pi,r) = u_{\pi}^T r$ where $u_{\pi}$ is the occupancy frequency of policy $\pi$. This allows us to simplify~\eqref{eq:robust_IRL_formulation} as follows.
-
+%
 \begin{equation}
 	\min_{u \in \mathcal{U}} \max_{r \in \mathcal{R}} \max_{v \in \Upsilon} v^T r - u^T r
 \end{equation}
 
 Next observe that maximizing over $r \in \mathcal{R}$ is equivalent to maximizing over $w \in \mathcal{W}$ since we assume that $r^* = \Phi w^*$.
-
+%
 \begin{equation}\label{eq:primal-robust-irl}
 	\min_{u \in \mathcal{U}} \max_{w \in \mathcal{W}} \max_{v \in \Upsilon} (v - u)^T \Phi w
 \end{equation}
@@ -392,15 +392,15 @@ and $\Phi = r^* = [0,0,1,1,-1,-1]$:
 	\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=3cm,
 			thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
 
-		\node[main node] (1) {S1};
-		\node[main node] (2) [above right of=1] {S2};
-		\node[main node] (3) [below right of=1] {S3};
+		\node[main node] (1) {$s_1$};
+		\node[main node] (2) [above right of=1] {$s_2$};
+		\node[main node] (3) [below right of=1] {$s_3$};
 
 		\path[every node/.style={font=\sffamily\small}]
-		(1) edge node [above left] {a1} (2)
-		edge node [below left] {a2} (3)
-		(2) edge [loop right] node {a1} (2)
-		(3) edge [loop right] node {a1} (3);
+		(1) edge node [above left] {$a_1$} (2)
+		edge node [below left] {$a_2$} (3)
+		(2) edge [loop right] node {$a_1$} (2)
+		(3) edge [loop right] node {$a_1$} (3);
 	\end{tikzpicture}
 \end{center}
 
@@ -409,30 +409,41 @@ While other less involved methods like LPAL~\cite{Syed2008} successfully recover
 $D = [(s_2, a_1)]$, this causes ROIL to find $u = [\frac{1}{2},\frac{1}{2},\frac{\gamma}{2(1-\gamma)},0,\frac{\gamma}{2(1-\gamma)},0]$.
 This example exposes two downsides of ROIL. Firstly, the pessimistic nature of ROIL, it assumes that the expert is trying to maximize the worst-case reward,
 and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited,
-and therefore what makes a dataset good for LPAL and other occpancy matching methods is not necessarily good for ROIL.
+and therefore what makes a dataset good for LPAL and other occupancy matching methods is not necessarily good for ROIL.
 
 \paragraph{The Strengths of ROIL}
 
 Proposition~\ref{expert_recovery} illustrates the main purpose of our work. The following domain shows what is possibly the greatest strength of our method.
-Consider the following deterministic MDP, where $S = \{s_1, s_2\}$, $A = \{a_1, a_2\}$, $p_0 = [1,0]$,
+Consider the following deterministic MDP, where $S = \{s_1, s_2\}$, $A_{s_1} = \{a_1, a_2\}$, $A_{s_2} = \{a_1\}$, $p_0 = [1-\epsilon,\epsilon]$,
 and the choice of $\Phi$ is of no consequence:
 \begin{center}
 	\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=3cm,
 			thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
 
-		\node[main node] (1) {S1};
-		\node[main node] (2) [right of=1] {S2};
+		\node[main node] (1) {$s_1$};
+		\node[main node] (2) [right of=1] {$s_2$};
 
 		\path[every node/.style={font=\sffamily\small}]
-		(1) edge [loop below] node {a1} (1)
-		(1) edge node [below, midway] {a2} (2)
-		(2) edge [loop right] node {a1} (2)
-        (2) edge [loop below] node {a2} (2);
+		(1) edge [loop below] node {$a_1$} (1)
+		(1) edge node [below, midway] {$a_2$} (2)
+		(2) edge [loop right] node {$a_1$} (2);
 	\end{tikzpicture}
 \end{center}
 
-Consider an optimal occupancy frequency $u^*_e = [\frac{1}{1-\gamma}, 0, 0, 0]$ which generates a dataset \gersi{Is this fair?} $D = [(s1, a1), (s2, a1)]$
-this leads both LPAL and GAIL to estimate $\hat{u}_e = [\frac{1}{2(1-\gamma)}, \frac{1}{2(1-\gamma}, 0, 0]$. The following graphs
+Consider an optimal occupancy frequency $u^*_e = [\frac{\epsilon + \gamma - 1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}]$ which generates a dataset $D = [(s1, a1), (s2, a1)]$
+this leads both LPAL and GAIL to estimate $\hat{u}_e = [\frac{1}{2(1-\gamma)}, 0, \frac{1}{2(1-\gamma)}]$. One can verify that the set of occupancy frequencies
+for this domain can be represented as a convex combination of the two deterministic policies resulting in
+\[U = \{\xi \in [0,1] \;\mid\; \xi[\frac{\epsilon+\gamma-1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}] + (1-\xi)[0,1-\epsilon,\frac{\gamma}{1-\gamma}+\epsilon]\}\] 
+Now we show that minimizing either the GAIL or LPAL objective given the above dataset does not converge to $u^*_e$. While by Proposition~\ref{expert_recovery} ROIL is guaranteed to recover the expert.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/lpal_loss.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/gail_loss.pdf}
+	\caption{The loss functions of LPAL and GAIL. Here JSD refers to the Jensen-Shannon Divergence which is the loss function minimized by GAIL when the coefficient of the 
+ causal entropy term H is 0~\cite{Ho2016}.}
+	\label{fig:loss_of_LPAL_GAIL}
+\end{figure}
 
 \paragraph{Visual Representation of ROIL}
 
@@ -735,9 +746,9 @@ In this section, we would like to provide insight into this bound using the nota
 \label{thm:LPAL}
 The optimization in \ref{eq:primal-robust-irl} can be written as
 	Let $\pi_{lp}$ be the policy returned by LPAL then
-	\[V(\pi_{lp}) \geq V(\pi_e) + v^* - \O\eps\]
+	\[V(\pi_{lp}) \geq V(\pi_e) + v^* - 2\eps\]
 	or equivalently expressed using occupancy frequencies
-	\[u_{lp}\tr r \geq u_e\tr r + v^* - \O\eps\]
+	\[u_{lp}\tr r \geq u_e\tr r + v^* - 2\eps\]
 
 	Where $\eps = \lvert\lvert \hat{u}_e\tr \Phi - u_e\tr \Phi\rvert\rvert_*$
 \end{restatable}
@@ -745,10 +756,10 @@ The optimization in \ref{eq:primal-robust-irl} can be written as
 \begin{proof}
 	Begin with the definitions
 	\[
-		u^* = \arg\min_{u \in \mathcal{U}} \lvert\lvert u\tr \Phi - u_e\tr \Phi \rvert\rvert_*
+		u^* = \arg\min_{u \in \mathcal{U}} \lvert\lvert u\tr \Phi - \hat{u_e}\tr \Phi \rvert\rvert_*
 	\]
 	\[
-		v^* = - \lvert\lvert \Phi\tr u^* - \Phi\tr u_e \rvert\rvert_*
+		v^* = - \lvert\lvert \Phi\tr u^* - \Phi\tr \hat{u_e} \rvert\rvert_*
 	\]
 	Given that we wish to bound $V(\pi_{lp}) - V(\pi_e)$ lets begin with the definition of $V(\cdot)$.
 	\[V(\pi_{lp}) - V(\pi_e) = u_{lp}\tr r - u_e\tr r\]
