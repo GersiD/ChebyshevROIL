@@ -108,7 +108,7 @@ class MDP(object):
         return policy
 
     def generate_samples_from_policy(
-        self, num_samples, policy
+            self, num_samples: int, policy
     ) -> List[Tuple[int, int]]:
         """Generate samples from the given policy
         policy = policy should be an SxA matrix where each row sums to 1
@@ -356,6 +356,60 @@ class MDP(object):
         # assert np.sum(u_flat) - 1 / (1 - self.gamma) < 10**-2
         return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
+    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]]) -> Tuple[np.ndarray, float, float]:
+        """Solves the chebyshev center problem to find the optimal occupancy_freq, this version first solves 
+        an inner maximization problem, then an outer minimization problem
+        Returns an SA matrix u in U, the chebyshev radius, and the optimal return"""
+        method = "Chebyshev_part_2"
+        s = self.num_states
+        a = self.num_actions
+        phi = self.phi
+        k = self.num_features
+        sa = s * a
+        p_0 = self.p_0
+        D_flat = set(itertools.chain.from_iterable(D))
+        c = self.construct_constraint_vector(D_flat)
+        W = self.IGammaPAStacked
+        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
+        # Generate the extreme points of R
+        w_i_mat = np.zeros((k*2, k)) # each row is an extreme point of R
+        for i in range(0, k):
+            w_i_mat[i][i] = 1
+            w_i_mat[i + k][i] = -1
+        # solve inner maximization problem
+        max_v_r_i = np.zeros((k*2))
+        model = gp.Model("inner maximization")
+        model.Params.OutputFlag = 0
+        # Define model variables
+        v = model.addMVar(shape=(sa), lb=0.0)
+        model.addMConstr(W.T, v, "==", p_0)
+        # model.addConstr(c @ v == 0) # this is the g_j constraint of Upsilon
+        eps = 1000
+        model.addConstr(v @ phi - u_e_hat @ phi <= eps)
+        model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
+        for i in range(0, k*2): # for each extreme point of R
+            model.reset(0)
+            model.setObjective(v@phi@w_i_mat[i], GRB.MAXIMIZE)
+            model.optimize()
+            if model.Status != GRB.Status.OPTIMAL:
+                raise ValueError(f"{method} DID NOT FIND OPTIMAL SOLUTION")
+            max_v_r_i[i] = model.objVal
+        # solve outer minimization problem
+        model = gp.Model("outer minimization")
+        model.Params.OutputFlag = 0
+        # Define model Variables
+        sigma = model.addVar(lb=0.0, obj=1.0)
+        u = model.addMVar(shape=(sa), lb=0.0)
+        model.addConstr(-u@phi@w_i_mat.T + max_v_r_i <= sigma)
+        model.addMConstr(W.T, u, "==", p_0)
+        model.setObjective(sigma, GRB.MINIMIZE)
+        model.optimize()
+        if model.Status != GRB.Status.OPTIMAL:
+            raise ValueError(f"{method} DID NOT FIND OPTIMAL SOLUTION")
+        radius = model.objVal
+        u_flat = u.X
+        return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
+
     def compute_V_hat(self, D: List[List[Tuple[int, int]]], episodes, horizon) -> np.ndarray:
         phi = self.phi
         gamma = self.gamma
@@ -472,10 +526,9 @@ class MDP(object):
         """Compute the empirical occupancy frequency of a given state-action pair
         returns a matrix of all occupancy_freq (SxA)"""
         u_hat = np.zeros((self.num_states, self.num_actions))
-        for d in D:
-            for t, (s,a) in enumerate(d):
-                u_hat[s,a] += self.gamma**t
-        return u_hat / len(D)
+        for t, (s,a) in enumerate(itertools.chain.from_iterable(D)):
+            u_hat[s,a] += self.gamma**t
+        return u_hat
 
     def D_w(self, state: int, action: int, w: np.ndarray) -> float:
         """Compute the sigmoid function for the current state, action

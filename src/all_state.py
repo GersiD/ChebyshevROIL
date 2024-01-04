@@ -21,9 +21,9 @@ class TwoState(MDP):
             for a in range(num_actions):
                 assert(sum(P[s, :, a]) - 1 < 1e-10)
         phi = np.zeros((num_states*num_actions, num_features))
-        p_0 = np.array([1,0])
+        p_0 = np.array([0.9,0.1])
         gamma = 0.99
-        reward = np.array([1,0,0,0])
+        reward = np.array([0,1,0,0])
         super().__init__(num_states, num_actions, num_features, P, phi, p_0, gamma, reward)
 
 def get_U_xi(xi, gamma):
@@ -76,13 +76,13 @@ def main():
     print(f"Opt policy = {env.opt_policy}")
     print(f"Opt occ freq = {env.u_E}")
     print(f"Opt value = {env.opt_return}")
-    # Set the font type to TrueType Globally
-    plt.rcParams['pdf.fonttype'] = 42
-    plt.rcParams['ps.fonttype'] = 42
-    # set the font to be Computer Modern (cmr10 doesnt work so we use serif)
-    plt.rcParams["font.family"] = "serif"
-    plot_lpal_error(env)
-    plot_gail_error(env)
+    # # Set the font type to TrueType Globally
+    # plt.rcParams['pdf.fonttype'] = 42
+    # plt.rcParams['ps.fonttype'] = 42
+    # # set the font to be Computer Modern (cmr10 doesnt work so we use serif)
+    # plt.rcParams["font.family"] = "serif"
+    # plot_lpal_error(env)
+    # plot_gail_error(env)
 
 if __name__ == "__main__":
     main()
