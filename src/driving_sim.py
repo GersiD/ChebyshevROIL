@@ -119,7 +119,7 @@ class DrivingSim(MDP):
 if __name__ == "__main__":
     num_rows = 40
     np.random.seed(603)
-    obstacles = list(np.random.choice(num_rows*num_rows, 10, replace=False))
+    obstacles = list(np.random.choice((num_rows*num_rows) - (num_rows + 1), 10, replace=False))
     dsim = DrivingSim(num_rows, obstacles)
     
     env = DrivingSim(5)
