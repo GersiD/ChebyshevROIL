@@ -7,7 +7,8 @@ import scipy
 import sklearn.linear_model
 
 class MDP(object):
-    """MDP class for use in the following methods which solve the MDP"""
+    """MDP class for use in the following methods which solve the MDP
+    """
 
     def __init__(
         self,
@@ -20,6 +21,17 @@ class MDP(object):
         gamma,
         reward=None,
     ):
+        """
+        parameters:
+            num_states: number of states in the MDP
+            num_actions: number of actions in the MDP
+            num_features: number of features in the MDP
+            P: transition probability matrix of size S x S x A
+            phi: feature matrix of size SA (rows) x K (cols)
+            p_0: initial state distribution of size S
+            gamma: discount factor
+            reward: reward vector with SA entries
+        """
         # super(MDP, self).__init__()
         self.num_states = num_states
         self.num_actions = num_actions
@@ -42,9 +54,7 @@ class MDP(object):
         # phi_gail \in S X A X (SxA)
         self.phi_gail = self.compute_phi_gail()
         # Phi matrix for BC \in S x (AxK)
-        self.BC_num_features = 5
-        if self.num_actions == 4:
-         self.phi_SxAK = self.compute_phi_S_AK()
+        self.phi_SxAK = self.compute_phi_S_AK()
 
         # Stacked (I - gamma P_a)
         self.IGammaPAStacked = self.construct_design_matrix()
@@ -75,18 +85,11 @@ class MDP(object):
     def compute_phi_S_AK(self) -> np.ndarray:
         """Compute phi_S_AK which is a matrix of size S x (A x K)
         This is used for the behavioral cloning solution"""
-        phi_S_AK = np.zeros((self.num_states, self.BC_num_features))
+        phi_S_AK = np.zeros((self.num_states, (self.num_actions * self.num_features)))
         for s in self.states:
-            # phi_S_AK[s, :] = self.phi_matrix[s, :, :].flatten()
-            phi_S_AK[s, 0] = np.argmax(self.phi_matrix[s, 0, :]) # color of the current state
-            s_prime = self.argmax_next_state(s, 0)
-            phi_S_AK[s, 1] = np.argmax(self.phi_matrix[s_prime, 0, :]) # color of the next state a = 0
-            s_prime = self.argmax_next_state(s, 1)
-            phi_S_AK[s, 2] = np.argmax(self.phi_matrix[s_prime, 0, :]) # color of the next state a = 1
-            s_prime = self.argmax_next_state(s, 2)
-            phi_S_AK[s, 3] = np.argmax(self.phi_matrix[s_prime, 0, :]) # color of the next state a = 2
-            s_prime = self.argmax_next_state(s, 3)
-            phi_S_AK[s, 4] = np.argmax(self.phi_matrix[s_prime, 0, :]) # color of the next state a = 3
+            for a in self.actions:
+                s_prime = self.argmax_next_state(s, a)
+                phi_S_AK[s, a*self.num_features:(a+1)*self.num_features] = self.phi_matrix[s_prime, a, :]
         return phi_S_AK
     
     def argmax_next_state(self, state: int, action: int) -> int:
@@ -101,10 +104,10 @@ class MDP(object):
         """Converts u which is an occupancy frequency matrix of size S x A to a policy of size S x A"""
         S = self.num_states
         A = self.num_actions
-        policy = np.zeros((S, A))
-        sum_u_s = np.sum(u, axis=1)
+        policy = np.zeros((S, A), dtype=float)
+        sum_u_s = np.sum(u, axis=1) # axis=1 means sum over rows
         for s in range(S):
-            policy[s, :] = u[s, :] / max(sum_u_s[s], 0.0000001)
+            policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
         return policy
 
     def generate_samples_from_policy(
@@ -155,7 +158,8 @@ class MDP(object):
         D: List[Tuple[int, int]] = []
         cur_state = np.random.choice(self.states, p=self.p_0)
         for _ in range(horizon):
-            D.append((cur_state, np.random.choice(self.actions, p=action_policy[cur_state, :])))
+            if any(action_policy[cur_state, :]): # Make sure the policy is not all zeros
+                D.append((cur_state, np.random.choice(self.actions, p=action_policy[cur_state, :])))
             cur_state = self.next_state(cur_state, np.random.choice(self.actions, p=behavior_policy[cur_state, :]))
         return D
 
@@ -261,8 +265,12 @@ class MDP(object):
 
         u_flat = u.X  # Gurobi way of getting the value of a model variable
         # Check to make sure u is an occupancy frequency
-        # assert np.sum(u_flat) - 1 / (1 - gamma) < 10**-2
         # Return the occ_freq and the opt return
+        for i in range(s * a): # make sure u is non-negative
+            if u_flat[i] < 0:
+                # print(u_flat[i])
+               u_flat[i] = 0.0
+        assert np.sum(u_flat) - (1 / (1 - gamma)) < 10**-2
         return u_flat.reshape((s, a), order="F"), dual_return
 
     def observed(self, state, D: Set[Tuple]) -> Tuple[bool, int]:
@@ -356,10 +364,10 @@ class MDP(object):
         # assert np.sum(u_flat) - 1 / (1 - self.gamma) < 10**-2
         return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
-    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]]) -> Tuple[np.ndarray, float, float]:
+    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool) -> Tuple[float, np.ndarray, float, float]:
         """Solves the chebyshev center problem to find the optimal occupancy_freq, this version first solves 
         an inner maximization problem, then an outer minimization problem
-        Returns an SA matrix u in U, the chebyshev radius, and the optimal return"""
+        Returns eps used for constraints, SA matrix u in U, the chebyshev radius, and the optimal return"""
         method = "Chebyshev_part_2"
         s = self.num_states
         a = self.num_actions
@@ -370,7 +378,6 @@ class MDP(object):
         D_flat = set(itertools.chain.from_iterable(D))
         c = self.construct_constraint_vector(D_flat)
         W = self.IGammaPAStacked
-        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
         # Generate the extreme points of R
         w_i_mat = np.zeros((k*2, k)) # each row is an extreme point of R
         for i in range(0, k):
@@ -383,8 +390,13 @@ class MDP(object):
         # Define model variables
         v = model.addMVar(shape=(sa), lb=0.0)
         model.addMConstr(W.T, v, "==", p_0)
-        # model.addConstr(c @ v == 0) # this is the g_j constraint of Upsilon
-        eps = 1000
+        if add_lin_constr:
+            model.addConstr(c @ v == 0)
+        # eps = 5000
+        # Use the true epsilon
+        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
+        eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
+        eps += 1 # add a small epsilon to make sure the constraint is satisfied
         model.addConstr(v @ phi - u_e_hat @ phi <= eps)
         model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
         for i in range(0, k*2): # for each extreme point of R
@@ -408,20 +420,17 @@ class MDP(object):
             raise ValueError(f"{method} DID NOT FIND OPTIMAL SOLUTION")
         radius = model.objVal
         u_flat = u.X
-        return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
+        return float(eps), u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
-    def compute_V_hat(self, D: List[List[Tuple[int, int]]], episodes, horizon) -> np.ndarray:
+    def compute_V_hat(self, D: List[List[Tuple[int, int]]]) -> np.ndarray:
         phi = self.phi
         gamma = self.gamma
         V = np.zeros(self.num_features)
         for i in range(self.num_features):
             # note phi_i is a matrix of size SxA for indexing purposes
             phi_i = phi[:, i].reshape((self.num_states, self.num_actions), order="F")
-            for m in range(episodes):
-                for h in range(horizon):
-                    s, a = D[m][h]
-                    V[i] += phi_i[s, a] * (gamma**h)
-            V[i] /= episodes
+            for t, (s,a) in enumerate(itertools.chain.from_iterable(D)):
+                    V[i] += phi_i[s, a] * (gamma**t)
         return V
 
     def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> Tuple[np.ndarray, float, float]:
@@ -440,7 +449,7 @@ class MDP(object):
         phi = self.phi
         W = self.IGammaPAStacked
         # Using the experts sample trajectories D, compute an epsilon-good estimate of V
-        V_hat = self.compute_V_hat(D, episodes, horizon)
+        V_hat = self.compute_V_hat(D)
         # Solve the LPAL formulation
         model = gp.Model(method)
         model.Params.OutputFlag = 0
@@ -602,7 +611,7 @@ class MDP(object):
         # u_e = self.u_E
         # prior_obj = self.obj(theta_cur)
         # while(prior_obj > 0.001 and iteration < 10):
-        for _ in range(100):
+        for _ in range(20):
             D_theta = self.generate_samples_from_sigmoid_policy(theta_cur, 1, horizon)
             u_theta = self.u_hat_all(D_theta)
             # u_theta = self.u_theta_matrix(theta_cur)
@@ -643,15 +652,18 @@ class MDP(object):
         phi = self.phi_SxAK
         D_flat = set(itertools.chain.from_iterable(D_e))
         # D_flat = list(itertools.chain.from_iterable(D_e))
-        model = sklearn.linear_model.LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
-        X = np.zeros((len(D_flat), self.BC_num_features))
+        model = sklearn.linear_model.LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=5000)
+        X = np.zeros((len(D_flat), self.num_actions*self.num_features))
         y = np.zeros(len(D_flat))
         observed_actions = {0:0, 1:0, 2:0, 3:0}
         for ind, (s,a) in enumerate(D_flat):
             X[ind, :] = phi[s,:]
             y[ind] = a
             observed_actions[a] = 1
-        model.fit(X, y)
+        try:
+            model.fit(X, y)
+        except ValueError: # This happens when there is only one class in the dataset
+            return self.random_return
         pi_mat = model.predict_proba(phi)
         # Pad the pi_mat since we may not have all actions in the dataset
         if sum(observed_actions.values()) < self.num_actions:
@@ -705,3 +717,9 @@ class MDP(object):
 
     def solve_MILO(self):
         pass
+
+# INFO: For testing purposes only
+if __name__ == "__main__":
+    print("------------------------------Running Gridworlds Main Func from rmdp.py------------------------------")
+    import gridworld
+    gridworld.main()

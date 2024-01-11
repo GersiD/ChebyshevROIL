@@ -10,8 +10,9 @@ class DrivingSim(MDP):
         self.num_rows = num_rows
         self.num_states = num_rows * num_rows
         self.num_actions = 3
+        self.obstacles = obstacles
         P = self.compute_transition()
-        phi, reward = self.compute_features_and_rewards(obstacles)
+        phi, reward = self.compute_features_and_rewards()
         # we want it to start on the bottom row but not on the edges
         p_0 = np.zeros(self.num_states) 
         p_0[(self.num_rows - 1) * self.num_rows + 1 : (self.num_rows - 1) * self.num_rows + self.num_rows - 1] = 1 / (self.num_rows - 2)
@@ -88,9 +89,8 @@ class DrivingSim(MDP):
                 assert(sum(P[s, :, a]) - 1 < 1e-10)
         return P
 
-    def compute_features_and_rewards(self, obstacles: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_features_and_rewards(self) -> Tuple[np.ndarray, np.ndarray]:
         """Compute the feature matrix, phi, which is a matrix of size SA x K which shows what features are active for each state-action pair
-        obstacles is a list of states that are obstacles
         There are 4 features:
         0 - The row the car is in
         1 - The column the car is in
@@ -103,42 +103,59 @@ class DrivingSim(MDP):
         """
         S = self.num_states
         A = self.num_actions
+        bumper_penalty = -100
+        crash_penalty = -1000
         phi = np.zeros((S, 4))
         for s in range(S):
             row = s // self.num_rows
             col = s % self.num_rows
             phi[s, 0] = row
             phi[s, 1] = col
-            phi[s, 3] = 1 if col == 0 or col == self.num_rows - 1 else 0
-        for s in obstacles:
-            phi[s, 2] = 1
+            phi[s, 3] = bumper_penalty if col == 0 or col == self.num_rows - 1 else 0
+        for s in self.obstacles:
+            phi[s, 2] = crash_penalty
         phi_SA = np.vstack([phi for _ in range(A)])
-        weights = np.array([0, 0, -0.5, -0.5])
+        weights = np.array([0.1, 0.1, 0.4, 0.2])
         return phi_SA, phi_SA @ weights
 
+    def display(self):
+        """Display the current state of the board"""
+        board = np.zeros((self.num_rows, self.num_rows))
+        print("Reward View")
+        for s in range(self.num_states):
+            row = s // self.num_rows
+            col = s % self.num_rows
+            board[row, col] = np.sum(self.reward_matrix[s, :])
+        print(board)
+        print("Obstacle View")
+        for s in range(self.num_states):
+            row = s // self.num_rows
+            col = s % self.num_rows
+            board[row, col] = 1 if s in self.obstacles else 0
+        print(board)
+        print("Opt Policy View")
+        for s in range(self.num_states):
+            row = s // self.num_rows
+            col = s % self.num_rows
+            board[row, col] = np.argmax(self.opt_policy[s])
+        print(board)
+
 if __name__ == "__main__":
-    num_rows = 40
-    np.random.seed(603)
-    obstacles = list(np.random.choice((num_rows*num_rows) - (num_rows + 1), 10, replace=False))
+    num_rows = 10
+    # np.random.see(603)
+    obstacles = list(np.random.choice((num_rows*num_rows) - (num_rows),  num_rows, replace=False))
     dsim = DrivingSim(num_rows, obstacles)
+    # dsim.display()
     
     env = DrivingSim(5)
     episodes = 1
     horizon = 10
     D = env.generate_demonstrations_from_occ_freq(env.u_E, episodes, horizon)
-    # D = [env.generate_samples_from_policy(episodes*horizon, env.opt_policy)]
-    # D = env.generate_off_policy_demonstrations(episodes, horizon, env.u_E, env.u_rand)
-    # D = [env.generate_all_expert_demonstrations()]
-    # print(env.reward)
-    # bc_return = env.solve_BC(D, episodes, horizon)
-    # print(f"\033[34mBC Return    = { bc_return }\033[0m")
-    # gail_ret = env.solve_GAIL(D, episodes, horizon)
-    # print(f"GAIL Return    = { gail_ret }")
     print(f"\033[32mOptimal Return = { env.opt_return }\033[0m")
     (_, radius, cheb_return) = env.solve_chebyshev_center(D)
     print(f"\033[34mCheb Return    = { cheb_return }\033[0m")
     print(f"\033[34mCheb Radius    = { radius }\033[0m")
-    (_, rad_2, cheb_return_2) = env.solve_cheb_part_2(D)
+    (eps, _, rad_2, cheb_return_2) = env.solve_cheb_part_2(D, False)
     print(f"\033[34mCheb Return2    = { cheb_return_2 }\033[0m")
     print(f"\033[34mCheb Radius2    = { rad_2 }\033[0m")
     (_, radius, syed_return) = env.solve_syed(D, episodes, horizon)
