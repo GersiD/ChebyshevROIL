@@ -37,7 +37,7 @@ def plot_returns(plotter: Plotter):
 def plot_return_diffs(plotter: Plotter):
     """Plots rho(u_E) - rho(u_pi) for each method"""
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
-    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC", "Random"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Optimal", "BC", "Random", "Epsilon"]
     x_axis = plotter.df["EstLInfDiff"]
     for column in plotter.df.columns:
         if column not in ignore_columns:
