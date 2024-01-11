@@ -20,7 +20,7 @@ class Plotter(object):
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
-    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
     dataset_size = plotter.df["dataset_size"]
     for column in plotter.df.columns:
         if column not in ignore_columns:
@@ -62,9 +62,10 @@ def for_each_dataset(fun: Callable):
 
 def main():
     # plot returns
-    # for_each_dataset(plot_returns)
-    # plot return_diffs
+    for_each_dataset(plot_returns)
     for_each_dataset(plot_return_diffs)
+    # plot return_diffs
+    # for_each_dataset(plot_return_diffs)
 
 if __name__ == "__main__":
     main()
