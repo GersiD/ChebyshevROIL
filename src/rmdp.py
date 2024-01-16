@@ -429,8 +429,10 @@ class MDP(object):
         for i in range(self.num_features):
             # note phi_i is a matrix of size SxA for indexing purposes
             phi_i = phi[:, i].reshape((self.num_states, self.num_actions), order="F")
-            for t, (s,a) in enumerate(itertools.chain.from_iterable(D)):
+            for d in D:
+                for t, (s, a) in enumerate(d):
                     V[i] += phi_i[s, a] * (gamma**t)
+            V[i] /= len(D)
         return V
 
     def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> Tuple[np.ndarray, float, float]:

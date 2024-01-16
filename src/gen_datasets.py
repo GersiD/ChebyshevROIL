@@ -88,8 +88,8 @@ class Experiment:
 def generate_dataset(env: MDP, off_policy: bool, name: str):
     """Given an enviornment this function generates the csvs of the return of IRL methods asyncronusly"""
     monolith_dataset: List[List[tuple[int, int]]]= [[]]
-    num_episodes = 100
-    horizon = 100
+    num_episodes = 64
+    horizon = 156
     print(f"Generating dataset for {name} {'off' if off_policy else 'on'} policy")
     if off_policy:
         monolith_dataset = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_E, env.u_rand)
