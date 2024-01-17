@@ -139,7 +139,7 @@ def main():
     episodes = 1
     horizon = 1000
     # D = env.generate_demonstrations_from_occ_freq(env.u_E, episodes, horizon)
-    D = [env.generate_samples_from_policy(episodes*horizon, env.opt_policy)]
+    D = env.generate_samples_from_policy(episodes, horizon, env.opt_policy)
     # D = env.generate_off_policy_demonstrations(episodes, horizon, env.u_E, env.u_rand)
     # D = [env.generate_all_expert_demonstrations()]
     # print(env.reward)

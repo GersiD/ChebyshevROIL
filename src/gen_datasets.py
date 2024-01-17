@@ -52,7 +52,7 @@ def run_one_experiment(env: MDP, num_examples: int, off_policy: bool = False) ->
     num_episodes = int(np.log(num_examples))
     horizon = num_examples // num_episodes
     if off_policy:
-        D = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_E, env.u_rand)
+        D = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_rand)
         return get_returns_across_methods(env, D, num_episodes, horizon)
     else:
         D = env.generate_demonstrations_from_occ_freq(env.u_E, num_episodes, horizon)
@@ -92,9 +92,9 @@ def generate_dataset(env: MDP, off_policy: bool, name: str):
     horizon = 312
     print(f"Generating dataset for {name} {'off' if off_policy else 'on'} policy")
     if off_policy:
-        monolith_dataset = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_E, env.u_rand)
+        monolith_dataset = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_rand)
     else:
-        monolith_dataset = env.generate_demonstrations_from_occ_freq(env.u_E, num_episodes, horizon)
+        monolith_dataset = env.generate_samples_from_policy(num_episodes, horizon, env.opt_policy)
     print(f"Done generating dataset for {name} {'off' if off_policy else 'on'} policy")
     closure = Experiment(env, monolith_dataset, off_policy)
     returns_per_DS_size: dict[str, List[float]] = {}

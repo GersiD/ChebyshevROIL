@@ -61,7 +61,7 @@ class MDP(object):
         # occupancy frequency of an expert's policy u[S x A]
         (u_E, opt_return) = self.solve_putterman_dual_LP_for_Opt_policy()
         self.u_E = u_E  # occupancy frequency of the expert's policy
-        self.opt_policy = self.occupancy_freq_to_policy(u_E)
+        self.opt_policy = self.occupancy_freq_to_policy(u_E, True)
         self.opt_return = opt_return  # optimal return of the expert's policy
         (u_rand, rand_return) = self.generate_random_policy_return()
         self.random_return = rand_return
@@ -100,28 +100,37 @@ class MDP(object):
         """Given state and action pair, return the next state based on the MDP dynamics"""
         return np.random.choice(self.states, p=self.P[state, :, action])
 
-    def occupancy_freq_to_policy(self, u) -> np.ndarray:
-        """Converts u which is an occupancy frequency matrix of size S x A to a policy of size S x A"""
+    def occupancy_freq_to_policy(self, u, force_deterministic: bool = False) -> np.ndarray:
+        """
+        Converts u which is an occupancy frequency matrix of size S x A to a policy of size S x A
+        Optionally, force the policy to be deterministic, by default it is stochastic
+        """
         S = self.num_states
         A = self.num_actions
         policy = np.zeros((S, A), dtype=float)
         sum_u_s = np.sum(u, axis=1) # axis=1 means sum over rows
         for s in range(S):
-            policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
+            if force_deterministic:
+                policy[s, np.argmax(u[s, :])] = 1.0
+            else:
+                policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
         return policy
 
     def generate_samples_from_policy(
-            self, num_samples: int, policy
-    ) -> List[Tuple[int, int]]:
+            self, episodes: int, horizon: int, policy: np.ndarray
+    ) -> List[List[Tuple[int, int]]]:
         """Generate samples from the given policy
         policy = policy should be an SxA matrix where each row sums to 1
         """
         D = []  # Dataset of (s, a) pairs
         cur_state = np.random.choice(self.states, p=self.p_0)
-        for _ in range(num_samples):
-            action = np.random.choice(self.actions, p=policy[cur_state, :])
-            D.append((cur_state, action))
-            cur_state = self.next_state(cur_state, action)
+        for _ in range(episodes):
+            d = []
+            for _ in range(horizon):
+                action = np.random.choice(self.actions, p=policy[cur_state, :])
+                d.append((cur_state, action))
+                cur_state = self.next_state(cur_state, action)
+            D.append(d)
         return D
 
     def generate_random_policy_return(self) -> Tuple[np.ndarray, float]:
@@ -144,28 +153,28 @@ class MDP(object):
         occupancy_freq = matrix of size S x A
         num_samples = number of samples to collect
         """
-        return self.generate_samples_from_policy(
+        return self.generate_samples_from_policy(1,
             num_samples, self.occupancy_freq_to_policy(occupancy_freq)
-        )
+        )[0]
 
     def generate_expert_demonstrations(self, num_samples) -> List[Tuple[int, int]]:
         """A wrapper around generate_samples which calls it with the optimal occupancy_freq calculated by
         the dual putterman solution"""
-        return self.generate_samples_from_occ_freq(num_samples, self.u_E)
+        return self.generate_samples_from_policy(1,num_samples, self.opt_policy)[0]
 
     def generate_samples_from_action_policy(self, horizon, action_policy, behavior_policy) -> List[Tuple[int, int]]:
         """Generate samples from the given action policy, where transition dynamics are governed by the behavior policy"""
         D: List[Tuple[int, int]] = []
         cur_state = np.random.choice(self.states, p=self.p_0)
         for _ in range(horizon):
-            # if any(action_policy[cur_state, :]): # Make sure the policy is not all zeros
             D.append((cur_state, np.random.choice(self.actions, p=action_policy[cur_state, :])))
             cur_state = self.next_state(cur_state, np.random.choice(self.actions, p=behavior_policy[cur_state, :]))
         return D
 
-    def generate_off_policy_demonstrations(self, episodes, horizon, action_occ_freq, behavior_occ_freq) -> List[List[Tuple[int, int]]]:
+    def generate_off_policy_demonstrations(self, episodes, horizon, behavior_occ_freq) -> List[List[Tuple[int, int]]]:
+        """Generate demonstrations from the expert, using the behavior policy to govern the transition dynamics"""
         behavior_policy = self.occupancy_freq_to_policy(behavior_occ_freq)
-        action_policy = self.occupancy_freq_to_policy(action_occ_freq)
+        action_policy = self.opt_policy
         D: List[List[Tuple[int, int]]] = []
         for _ in range(episodes):
             D.append(self.generate_samples_from_action_policy(horizon, action_policy, behavior_policy))
@@ -186,11 +195,11 @@ class MDP(object):
 
         def __init__(self, mdp, policy, horizon):
             self.policy = policy
-            self.mdp = mdp
+            self.mdp: MDP = mdp
             self.horizon = horizon
 
-        def __call__(self, _) -> List[Tuple[int, int]]:
-            return self.mdp.generate_samples_from_policy(
+        def __call__(self, _) -> List[List[Tuple[int, int]]]:
+            return self.mdp.generate_samples_from_policy(1,
                 self.horizon, policy=self.policy
             )
 
@@ -208,17 +217,8 @@ class MDP(object):
         """
         if num_samples:
             return [self.generate_samples_from_occ_freq(num_samples, occ_freq)]
-        D: List[List[Tuple[int, int]]] = []
-        # This code is left here just in case I want to test parallelization again
-        # gen_samples_closure = self.SampleCollector(
-        #     self, self.occupancy_freq_to_policy(occ_freq), horizon
-        # )
-        # with Pool(1) as pool:
-        #     D = list(pool.map(gen_samples_closure, range(episodes)))
         policy = self.occupancy_freq_to_policy(occ_freq)
-        for _ in range(0, episodes):
-            D.append(self.generate_samples_from_policy(horizon, policy))
-        return D
+        return self.generate_samples_from_policy(episodes, horizon, policy)
 
     def construct_design_matrix(self) -> np.ndarray:
         """
