@@ -158,8 +158,8 @@ class MDP(object):
         D: List[Tuple[int, int]] = []
         cur_state = np.random.choice(self.states, p=self.p_0)
         for _ in range(horizon):
-            if any(action_policy[cur_state, :]): # Make sure the policy is not all zeros
-                D.append((cur_state, np.random.choice(self.actions, p=action_policy[cur_state, :])))
+            # if any(action_policy[cur_state, :]): # Make sure the policy is not all zeros
+            D.append((cur_state, np.random.choice(self.actions, p=action_policy[cur_state, :])))
             cur_state = self.next_state(cur_state, np.random.choice(self.actions, p=behavior_policy[cur_state, :]))
         return D
 
@@ -424,16 +424,8 @@ class MDP(object):
 
     def compute_V_hat(self, D: List[List[Tuple[int, int]]]) -> np.ndarray:
         phi = self.phi
-        gamma = self.gamma
-        V = np.zeros(self.num_features)
-        for i in range(self.num_features):
-            # note phi_i is a matrix of size SxA for indexing purposes
-            phi_i = phi[:, i].reshape((self.num_states, self.num_actions), order="F")
-            for d in D:
-                for t, (s, a) in enumerate(d):
-                    V[i] += phi_i[s, a] * (gamma**t)
-            V[i] /= len(D)
-        return V
+        u_e_hat = self.u_hat_all(D).reshape((self.num_states * self.num_actions), order="F")
+        return u_e_hat @ phi
 
     def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> Tuple[np.ndarray, float, float]:
         """Solve the LPAL LP from Syed.
@@ -537,9 +529,10 @@ class MDP(object):
         """Compute the empirical occupancy frequency of a given state-action pair
         returns a matrix of all occupancy_freq (SxA)"""
         u_hat = np.zeros((self.num_states, self.num_actions))
-        for t, (s,a) in enumerate(itertools.chain.from_iterable(D)):
-            u_hat[s,a] += self.gamma**t
-        return u_hat
+        for d in D:
+            for t, (s,a) in enumerate(d):
+                u_hat[s,a] += self.gamma**t
+        return u_hat / len(D)
 
     def D_w(self, state: int, action: int, w: np.ndarray) -> float:
         """Compute the sigmoid function for the current state, action
