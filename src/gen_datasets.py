@@ -5,6 +5,7 @@ import numpy as np
 from concurrent.futures import ProcessPoolExecutor as Pool
 import pandas as pd
 from rmdp import MDP
+import pickle
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
 """Mainly for running experiments and generating datasets (csv)"""
@@ -21,10 +22,10 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list: dict[str, float] = {}
 
     # add the returns of each u to the list
-    returns_list["ROIL_LIN"] = env.solve_chebyshev_center(D)[2]
-    eps, _, _, ret = env.solve_cheb_part_2(D, False)
+    returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
+    eps, _, _, ret = env.solve_cheb_part_2(D, False, True)
     returns_list["ROIL_LINF"] = ret
-    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, True)[3]
+    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, True, True)[3]
     returns_list["LPAL"] = env.solve_syed(D, num_episodes, horizon)[2]
     returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
     returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
@@ -55,22 +56,17 @@ def run_one_experiment(env: MDP, num_examples: int, off_policy: bool = False) ->
         D = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_rand)
         return get_returns_across_methods(env, D, num_episodes, horizon)
     else:
-        D = env.generate_demonstrations_from_occ_freq(env.u_E, num_episodes, horizon)
+        D = env.generate_samples_from_policy(num_episodes, horizon, env.opt_policy)
         return get_returns_across_methods(env, D, num_episodes, horizon)
 
 def run_experiments_then_average(
-    env: MDP, trials: int, episode_len: int, off_policy: bool) -> dict[str, float]:
-    runing_total: dict[str, float] = run_one_experiment(env, episode_len, off_policy)
+    env: MDP, trials: int, episode_len: int, off_policy: bool) -> List[dict[str, float]]:
+    runing_total: List[dict] = []
 
-    for _ in range(1, trials):
+    for _ in range(0, trials):
         one_experiment_return: dict[str, float] = run_one_experiment(env, episode_len, off_policy)
-        # Add up the returns
-        for key in one_experiment_return.keys():
-            runing_total[key] += one_experiment_return[key]
+        runing_total.append(one_experiment_return)
 
-    # Now compute the average for each
-    for key in runing_total.keys():
-        runing_total[key] /= trials
     return runing_total
 
 class Experiment:
@@ -83,29 +79,22 @@ class Experiment:
         self.monolith_dataset = monolith_dataset
 
     def __call__(self, it: int):
-        return get_returns_across_methods(self.env, self.monolith_dataset[:it], it, len(self.monolith_dataset[0]))
+        return run_experiments_then_average(self.env, 10, it, self.off_policy)
 
 def generate_dataset(env: MDP, off_policy: bool, name: str):
     """Given an enviornment this function generates the csvs of the return of IRL methods asyncronusly"""
     monolith_dataset: List[List[tuple[int, int]]]= [[]]
-    num_episodes = 32
-    horizon = 312
-    print(f"Generating dataset for {name} {'off' if off_policy else 'on'} policy")
-    if off_policy:
-        monolith_dataset = env.generate_off_policy_demonstrations(num_episodes, horizon, env.u_rand)
-    else:
-        monolith_dataset = env.generate_samples_from_policy(num_episodes, horizon, env.opt_policy)
-    print(f"Done generating dataset for {name} {'off' if off_policy else 'on'} policy")
     closure = Experiment(env, monolith_dataset, off_policy)
     returns_per_DS_size: dict[str, List[float]] = {}
     results = []
     with Pool() as pool:
-        results = pool.map(closure, range(1, num_episodes + 1))
-        for result in results:
-            print(result)
-            for key, value in result.items():
-                returns_per_DS_size.setdefault(key, [])
-                returns_per_DS_size[key].append(value)
+        results = pool.map(closure, np.linspace(100,10000,12, dtype=int))
+        for resList in results:
+            print(resList)
+            for result in resList:
+                for key, value in result.items():
+                    returns_per_DS_size.setdefault(key, [])
+                    returns_per_DS_size[key].append(value)
 
     dataset = pd.DataFrame.from_dict(returns_per_DS_size)
     num_rows = int(np.sqrt(env.num_states))
@@ -116,9 +105,13 @@ def generate_datasets_across_env_size(env_sizes: List[int]):
         print(f"Running experiment with {env_size}x{env_size} gridworld!")
         obstacles = list(np.random.choice((env_size*env_size) - (env_size + 1), env_size, replace=False))
         env = DrivingSim(env_size, obstacles)
+        # with open(f"envs/{env_size}x{env_size}_driving_env.pkl", "wb") as f:
+        #     pickle.dump(env, f)
         generate_dataset(env, True, "driving")
         generate_dataset(env, False, "driving")
         env = GridWorld(env_size, 0.99)
+        # with open(f"envs/{env_size}x{env_size}_gridworld_env.pkl", "wb") as f:
+        #     pickle.dump(env, f)
         generate_dataset(env, True, "gridworld")
         generate_dataset(env, False, "gridworld")
 
@@ -131,7 +124,7 @@ def main():
     # generate_dataset(env, False)
     
     # if you want to run multiple experiments
-    generate_datasets_across_env_size([5,10,20,30,40])
+    generate_datasets_across_env_size([30,40])
 
 if __name__ == "__main__":
     main()

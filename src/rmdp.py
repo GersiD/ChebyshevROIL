@@ -61,6 +61,7 @@ class MDP(object):
         # occupancy frequency of an expert's policy u[S x A]
         (u_E, opt_return) = self.solve_putterman_dual_LP_for_Opt_policy()
         self.u_E = u_E  # occupancy frequency of the expert's policy
+        self.u_E_flat = u_E.reshape((self.num_states * self.num_actions), order="F")
         self.opt_policy = self.occupancy_freq_to_policy(u_E, True)
         self.opt_return = opt_return  # optimal return of the expert's policy
         (u_rand, rand_return) = self.generate_random_policy_return()
@@ -182,10 +183,9 @@ class MDP(object):
 
     def generate_all_expert_demonstrations(self) -> List[Tuple[int, int]]:
         """Returns a list of all s,a pairs that the expert follows"""
-        policy = self.occupancy_freq_to_policy(self.u_E)
         D = []
         for s in self.states:
-            a = np.random.choice(self.actions, p=policy[s, :])
+            a = np.argmax(self.opt_policy[s, :])
             D.append((s, a))
         return D
 
@@ -364,7 +364,7 @@ class MDP(object):
         # assert np.sum(u_flat) - 1 / (1 - self.gamma) < 10**-2
         return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
-    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool) -> Tuple[float, np.ndarray, float, float]:
+    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool, add_linf_constr: bool) -> Tuple[float, np.ndarray, float, float]:
         """Solves the chebyshev center problem to find the optimal occupancy_freq, this version first solves 
         an inner maximization problem, then an outer minimization problem
         Returns eps used for constraints, SA matrix u in U, the chebyshev radius, and the optimal return"""
@@ -394,11 +394,13 @@ class MDP(object):
             model.addConstr(c @ v == 0)
         # eps = 5000
         # Use the true epsilon
-        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
-        eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
-        eps += 1 # add a small epsilon to make sure the constraint is satisfied
-        model.addConstr(v @ phi - u_e_hat @ phi <= eps)
-        model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
+        eps = np.inf
+        if add_linf_constr:
+            u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
+            eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
+            eps += 1 # add a small epsilon to make sure the constraint is satisfied
+            model.addConstr(v @ phi - u_e_hat @ phi <= eps)
+            model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
         for i in range(0, k*2): # for each extreme point of R
             model.reset(0)
             model.setObjective(v@phi@w_i_mat[i], GRB.MAXIMIZE)
@@ -422,12 +424,13 @@ class MDP(object):
         u_flat = u.X
         return float(eps), u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
-    def compute_V_hat(self, D: List[List[Tuple[int, int]]]) -> np.ndarray:
+    def compute_V_hat(self, D: List[List[Tuple[int, int]]], u_e_hat=None) -> np.ndarray:
         phi = self.phi
-        u_e_hat = self.u_hat_all(D).reshape((self.num_states * self.num_actions), order="F")
+        if u_e_hat is None:
+            u_e_hat = self.u_hat_all(D).reshape((self.num_states * self.num_actions), order="F")
         return u_e_hat @ phi
 
-    def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> Tuple[np.ndarray, float, float]:
+    def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int, u_e_hat = None) -> Tuple[np.ndarray, float, float]:
         """Solve the LPAL LP from Syed.
         Args:
             D: list of trajectories (which themselves are lists of length horizon)
@@ -443,7 +446,7 @@ class MDP(object):
         phi = self.phi
         W = self.IGammaPAStacked
         # Using the experts sample trajectories D, compute an epsilon-good estimate of V
-        V_hat = self.compute_V_hat(D)
+        V_hat = self.compute_V_hat(D, u_e_hat)
         # Solve the LPAL formulation
         model = gp.Model(method)
         model.Params.OutputFlag = 0
