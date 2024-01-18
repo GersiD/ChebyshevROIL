@@ -23,6 +23,7 @@ def plot_returns(plotter: Plotter):
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
+    dataset_sizes.sort()
     means_across_D_size: dict[str, list[float]] = {}
     cis_across_D_size: dict[str, list[float]] = {}
     # compute the mean and confidence interval for each column we care about
@@ -50,6 +51,7 @@ def plot_returns(plotter: Plotter):
     plt.legend(loc="lower right")
     plt.grid()
     plt.savefig(f"plots/returns/{plotter.filename}_returns.pdf")
+    plt.show()
     plt.clf()
 
 def plot_return_diffs(plotter: Plotter):
