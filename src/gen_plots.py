@@ -21,19 +21,28 @@ class Plotter(object):
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
+    markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
+    colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan", "black", "magenta"]
     dataset_size = plotter.df["dataset_size"]
     dataset_sizes: set = set(dataset_size) # unique dataset sizes
+    means_across_D_size: dict[str, float] = {}
+    cis_across_D_size: dict[str, float] = {}
+    # compute the mean and confidence interval for each column we care about
     for dataset_size in dataset_sizes:
-        markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
-        colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan", "black", "magenta"]
         filtered_df = plotter.df[plotter.df["dataset_size"] == dataset_size]
         for column in plotter.df.columns:
             if column not in ignore_columns:
                 ci = 1.96 * filtered_df[column].std() / np.sqrt(len(filtered_df))
-                color = colors.pop()
-                marker = markers.pop()
-                plt.errorbar(dataset_size, filtered_df[column].mean(), yerr=ci, color=color, label=column)
-                plt.scatter(dataset_size, filtered_df[column].mean(), label=column, marker=marker)
+                cis_across_D_size[column] = ci
+                means_across_D_size[column] = filtered_df[column].mean()
+    # plot the mean and confidence interval for each column
+    for column in plotter.df.columns:
+        if column not in ignore_columns:
+            ci = cis_across_D_size[column]
+            color = colors.pop()
+            marker = markers.pop()
+            plt.errorbar(dataset_size, means_across_D_size[column], yerr=ci, color=color)
+            plt.scatter(dataset_size, means_across_D_size[column], label=column, marker=marker, color=color)
 
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
