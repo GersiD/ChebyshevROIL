@@ -41,8 +41,8 @@ def plot_returns(plotter: Plotter):
             ci = cis_across_D_size[column]
             color = colors.pop()
             marker = markers.pop()
-            plt.errorbar(dataset_size, means_across_D_size[column], yerr=ci, color=color)
-            plt.scatter(dataset_size, means_across_D_size[column], label=column, marker=marker, color=color)
+            plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci, color=color)
+            plt.scatter(dataset_sizes, means_across_D_size[column], label=column, marker=marker, color=color)
 
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
