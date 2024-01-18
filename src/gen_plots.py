@@ -2,6 +2,7 @@ from typing import Callable
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import numpy as np
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
 """Mainly for plotting the results of the experiments stored in the datasetes directory"""
@@ -19,12 +20,21 @@ class Plotter(object):
 
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
     dataset_size = plotter.df["dataset_size"]
-    for column in plotter.df.columns:
-        if column not in ignore_columns:
-            plt.plot(dataset_size, plotter.df[column], label=column, marker=markers.pop())
+    dataset_sizes: set = set(dataset_size) # unique dataset sizes
+    for dataset_size in dataset_sizes:
+        markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
+        colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan", "black", "magenta"]
+        filtered_df = plotter.df[plotter.df["dataset_size"] == dataset_size]
+        for column in plotter.df.columns:
+            if column not in ignore_columns:
+                ci = 1.96 * filtered_df[column].std() / np.sqrt(len(filtered_df))
+                color = colors.pop()
+                marker = markers.pop()
+                plt.errorbar(dataset_size, filtered_df[column].mean(), yerr=ci, color=color, label=column)
+                plt.scatter(dataset_size, filtered_df[column].mean(), label=column, marker=marker)
+
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
     plt.title(f"Expected Return vs Dataset Size : {plotter.filename}")
@@ -63,7 +73,7 @@ def for_each_dataset(fun: Callable):
 def main():
     # plot returns
     for_each_dataset(plot_returns)
-    for_each_dataset(plot_return_diffs)
+    # for_each_dataset(plot_return_diffs)
     # plot return_diffs
     # for_each_dataset(plot_return_diffs)
 
