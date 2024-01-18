@@ -3,3 +3,4 @@ paper/build
 paper/RIRL_NHT.synctex.gz
 paper/RIRL_NHT.pdf
 paper/RIRL_NHT.fls
+src/tests/__pycache__
