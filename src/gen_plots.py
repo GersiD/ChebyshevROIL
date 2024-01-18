@@ -23,18 +23,19 @@ def plot_returns(plotter: Plotter):
     ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan", "black", "magenta"]
-    dataset_size = plotter.df["dataset_size"]
-    dataset_sizes: set = set(dataset_size) # unique dataset sizes
-    means_across_D_size: dict[str, float] = {}
-    cis_across_D_size: dict[str, float] = {}
+    dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
+    means_across_D_size: dict[str, list[float]] = {}
+    cis_across_D_size: dict[str, list[float]] = {}
     # compute the mean and confidence interval for each column we care about
     for dataset_size in dataset_sizes:
         filtered_df = plotter.df[plotter.df["dataset_size"] == dataset_size]
         for column in plotter.df.columns:
             if column not in ignore_columns:
                 ci = 1.96 * filtered_df[column].std() / np.sqrt(len(filtered_df))
-                cis_across_D_size[column] = ci
-                means_across_D_size[column] = filtered_df[column].mean()
+                cis_across_D_size.setdefault(column, [])
+                cis_across_D_size[column].append(ci)
+                means_across_D_size.setdefault(column, [])
+                means_across_D_size[column].append(filtered_df[column].mean())
     # plot the mean and confidence interval for each column
     for column in plotter.df.columns:
         if column not in ignore_columns:
