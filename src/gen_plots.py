@@ -20,7 +20,7 @@ class Plotter(object):
 
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon", "Random", "Optimal"]
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
     dataset_sizes.sort()
@@ -43,6 +43,9 @@ def plot_returns(plotter: Plotter):
             marker = markers.pop()
             plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci)
             plt.scatter(dataset_sizes, means_across_D_size[column], label=column, marker=marker)
+    # Plot the optimal return and random return as a horizontal line
+    plt.axhline(y=plotter.df["Optimal"].mean(), color="black", linestyle="--", label="Optimal")
+    plt.axhline(y=plotter.df["Random"].mean(), color="black", linestyle=":", label="Random")
 
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
@@ -51,7 +54,6 @@ def plot_returns(plotter: Plotter):
     plt.legend(loc="lower right")
     plt.grid()
     plt.savefig(f"plots/returns/{plotter.filename}_returns.pdf")
-    plt.show()
     plt.clf()
 
 def plot_return_diffs(plotter: Plotter):
