@@ -56,6 +56,29 @@ def plot_returns(plotter: Plotter):
     plt.savefig(f"plots/returns/{plotter.filename}_returns.pdf")
     plt.clf()
 
+def plot_epsilon_experiment(plotter: Plotter):
+    """Plots the experiment returns across the dataset size for the given plotter"""
+    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon", "Random", "Optimal", "True_Epsilon", "LPAL_Rad"]
+    markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
+    for col in plotter.df.columns:
+        if col not in ignore_columns:
+            plt.scatter(plotter.df["Epsilon"], plotter.df[col], label=col, marker=markers.pop())
+    # Plot vertical lines for lpals rad and the true eps
+    plt.axvline(x=plotter.df["True_Epsilon"].mean(), color="black", linestyle="-", label="True Epsilon")
+    plt.axvline(x=plotter.df["LPAL_Rad"].mean(), color="black", linestyle="-.", label="LPAL Rad")
+    # Plot the optimal return and random return as a horizontal line
+    plt.axhline(y=plotter.df["Optimal"].mean(), color="black", linestyle="--", label="Optimal")
+    plt.axhline(y=plotter.df["Random"].mean(), color="black", linestyle=":", label="Random")
+
+    plt.xlabel("||Phi^T@u_E - Phi^T@u_E_hat||_inf")
+    plt.ylabel("Expected Return")
+    plt.title(f"Expected Return vs Epsilon : {plotter.filename}")
+    # Move legend to outside of plot
+    plt.legend(loc="lower right")
+    plt.grid()
+    plt.savefig(f"plots/epsilon_experiment/{plotter.filename}_eps_experiment.pdf")
+    plt.clf()
+
 def plot_return_diffs(plotter: Plotter):
     """Plots rho(u_E) - rho(u_pi) for each method"""
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
@@ -73,21 +96,24 @@ def plot_return_diffs(plotter: Plotter):
     plt.savefig(f"plots/return_diffs/{plotter.filename}_return_diffs.pdf")
     plt.clf()
 
-def for_each_dataset(fun: Callable):
+def for_each_dataset(dir: str, fun: Callable):
     """Loop over each dataset in the datasets/ directory and apply fun to it,
     fun must take a Plotter object as its argument"""
-    for filename in os.listdir("datasets/"):
+    for filename in os.listdir(dir):
         if filename.endswith(".csv"):
             fname = filename.split(".")[0] # remove the .csv
             print(f"Processing {fname}")
-            fun(Plotter(fname, pd.read_csv(f"datasets/{filename}")))
+            fun(Plotter(fname, pd.read_csv(f"{dir}/{filename}")))
 
 def main():
     # plot returns
-    for_each_dataset(plot_returns)
-    # for_each_dataset(plot_return_diffs)
+    # dir = "datasets"
+    # for_each_dataset(dir, plot_returns)
     # plot return_diffs
-    # for_each_dataset(plot_return_diffs)
+    # for_each_dataset(dir, plot_return_diffs)
+    # plot epsilon experiment
+    dir = "datasets/epsilon_experiment"
+    for_each_dataset(dir, plot_epsilon_experiment)
 
 if __name__ == "__main__":
     main()

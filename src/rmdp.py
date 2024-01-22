@@ -364,7 +364,7 @@ class MDP(object):
         # assert np.sum(u_flat) - 1 / (1 - self.gamma) < 10**-2
         return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
-    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool, add_linf_constr: bool) -> Tuple[float, np.ndarray, float, float]:
+    def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool, add_linf_constr: bool, passed_eps = None) -> Tuple[float, np.ndarray, float, float]:
         """Solves the chebyshev center problem to find the optimal occupancy_freq, this version first solves 
         an inner maximization problem, then an outer minimization problem
         Returns eps used for constraints, SA matrix u in U, the chebyshev radius, and the optimal return"""
@@ -397,8 +397,11 @@ class MDP(object):
         eps = np.inf
         if add_linf_constr:
             u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
-            eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
-            eps += 1 # add a small epsilon to make sure the constraint is satisfied
+            eps = passed_eps
+            if passed_eps == np.inf:
+                eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
+                eps += 1 # add a small epsilon to make sure the constraint is satisfied
+
             model.addConstr(v @ phi - u_e_hat @ phi <= eps)
             model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
         for i in range(0, k*2): # for each extreme point of R
