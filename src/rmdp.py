@@ -393,15 +393,10 @@ class MDP(object):
         if add_lin_constr:
             model.addConstr(c @ v == 0)
         # eps = 5000
-        # Use the true epsilon
-        eps = np.inf
+        # Use the true epsilon if passsed no epsilon
+        eps = passed_eps if passed_eps else (np.linalg.norm(((self.u_E).reshape((sa), order="F") - self.u_hat_all(D).reshape((sa), order="F"))@phi, ord=np.inf) + 1)
         if add_linf_constr:
             u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
-            eps = passed_eps
-            if passed_eps == np.inf:
-                eps = np.linalg.norm(((self.u_E).reshape((sa), order="F") - u_e_hat)@phi, ord=np.inf)
-                eps += 1 # add a small epsilon to make sure the constraint is satisfied
-
             model.addConstr(v @ phi - u_e_hat @ phi <= eps)
             model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
         for i in range(0, k*2): # for each extreme point of R
@@ -430,6 +425,7 @@ class MDP(object):
     def compute_V_hat(self, D: List[List[Tuple[int, int]]], u_e_hat=None) -> np.ndarray:
         phi = self.phi
         if u_e_hat is None:
+            #u_e_hat is an SA vector
             u_e_hat = self.u_hat_all(D).reshape((self.num_states * self.num_actions), order="F")
         return u_e_hat @ phi
 
@@ -456,8 +452,7 @@ class MDP(object):
 
         u = model.addMVar(shape=(self.num_states * self.num_actions), name="u", lb=0.0)
         B = model.addVar(name="B", lb=-GRB.INFINITY)
-        for i in range(self.num_features):
-            model.addConstr(B <= (phi[:, i] @ u) - V_hat[i])
+        model.addConstr(B <= (u@phi) - V_hat)
         model.addMConstr(W.T, u, "==", p_0)
 
         # model.write("./" + method + ".lp") # write the model to a file, for debugging

@@ -19,9 +19,6 @@ def run_one_experiment(env: MDP, eps: float, D: List[List[tuple[int,int]]]) -> d
     returns_dict["Epsilon"] = eps
     returns_dict["Optimal"] = env.opt_return
     returns_dict["Random"] = env.random_return
-    _, syed_rad, syed_ret = env.solve_syed(D, len(D), len(D[0]))
-    returns_dict["LPAL"] = syed_ret
-    returns_dict["LPAL_Rad"] = syed_rad
     return returns_dict
 
 class Experiment:
@@ -47,17 +44,20 @@ def gen_dataset_for_eps(env: MDP, name:str, off_policy: bool):
     true_eps: float = float(np.linalg.norm(((env.u_E).reshape((env.num_states*env.num_actions), order="F") - u_e_hat.reshape((env.num_states*env.num_actions), order="F"))@env.phi, ord=np.inf))
     print(f"True Epsilon: {true_eps}")
     true_eps *= 1.5 # 50% more than true epsilon because I want to see what happens
+    _, syed_rad, syed_ret = env.solve_syed(D, len(D), len(D[0])) # Solve Syed's LPAL once
     with Pool() as pool:
         results = pool.map(closure, np.linspace(100,true_eps,64, dtype=float))
         for result in results:
             result["True_Epsilon"] = true_eps/1.5 # normalize true epsilon
+            result["LPAL_Rad"] = syed_rad # Should be the same for all epsilons
+            result["LPAL"] = syed_ret
             print(result)
             for key, value in result.items():
                 returns_list.setdefault(key, [])
                 returns_list[key].append(value)
     dataset = pd.DataFrame.from_dict(returns_list)
     num_rows = int(np.sqrt(env.num_states))
-    dataset.to_csv(f"datasets/epsilon_experiment/{num_rows}x{num_rows}_{name}_{'off' if off_policy else 'on'}_policy.csv", index=False)
+    dataset.to_csv(f"./datasets/epsilon_experiment/{num_rows}x{num_rows}_{name}_{'off' if off_policy else 'on'}_policy.csv", index=False)
 
 def main():
     # create an env

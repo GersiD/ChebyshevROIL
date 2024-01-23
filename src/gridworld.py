@@ -151,7 +151,7 @@ def main():
     (u_cheb, radius, cheb_return) = env.solve_chebyshev_center(D)
     print(f"\033[34mCheb Return    = { cheb_return }\033[0m")
     print(f"\033[33mCheb Radius    = { radius }\033[0m")
-    (eps, u_cheb2, rad_2, cheb_return_2) = env.solve_cheb_part_2(D, False)
+    (eps, u_cheb2, rad_2, cheb_return_2) = env.solve_cheb_part_2(D, False, True)
     print(f"\033[34mCheb Return2    = { cheb_return_2 }\033[0m")
     print(f"\033[33mCheb Radius2    = { rad_2 }\033[0m")
     print(f"\033[36mDifferece in Cheb Return = { np.abs(cheb_return - cheb_return_2) }\033[0m")
