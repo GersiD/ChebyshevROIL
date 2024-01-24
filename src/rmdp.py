@@ -451,12 +451,14 @@ class MDP(object):
         model.Params.OutputFlag = 0
 
         u = model.addMVar(shape=(self.num_states * self.num_actions), name="u", lb=0.0)
-        B = model.addVar(name="B", lb=-GRB.INFINITY)
-        model.addConstr(B <= (u@phi) - V_hat)
+        B = model.addVar(name="B", lb=0.0)
+        # model.addConstr(B <= (u@phi) - V_hat)
+        model.addConstr(B >= (u@phi) - V_hat)
+        model.addConstr(B >= (-1 *(u@phi)) + V_hat)
         model.addMConstr(W.T, u, "==", p_0)
 
         # model.write("./" + method + ".lp") # write the model to a file, for debugging
-        model.setObjective(B, GRB.MAXIMIZE)
+        model.setObjective(B, GRB.MINIMIZE)
 
         # Solve
         model.optimize()
