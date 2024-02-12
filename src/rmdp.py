@@ -414,6 +414,7 @@ class MDP(object):
         u = model.addMVar(shape=(sa), lb=0.0)
         model.addConstr(-u@phi@w_i_mat.T + max_v_r_i <= sigma)
         model.addMConstr(W.T, u, "==", p_0)
+        model.addConstr(c @ u == 0) # INFO: CONSTRAINT U TO BE IN UPSILON 
         model.setObjective(sigma, GRB.MINIMIZE)
         model.optimize()
         if model.Status != GRB.Status.OPTIMAL:
