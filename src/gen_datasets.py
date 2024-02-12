@@ -124,7 +124,7 @@ def main():
     # generate_dataset(env, False)
     
     # if you want to run multiple experiments
-    generate_datasets_across_env_size([30,40])
+    generate_datasets_across_env_size([5,10,20,30,40])
 
 if __name__ == "__main__":
     main()

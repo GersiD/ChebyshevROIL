@@ -107,13 +107,13 @@ def for_each_dataset(dir: str, fun: Callable):
 
 def main():
     # plot returns
-    # dir = "datasets"
-    # for_each_dataset(dir, plot_returns)
+    dir = "datasets"
+    for_each_dataset(dir, plot_returns)
     # plot return_diffs
     # for_each_dataset(dir, plot_return_diffs)
     # plot epsilon experiment
-    dir = "datasets/epsilon_experiment"
-    for_each_dataset(dir, plot_epsilon_experiment)
+    # dir = "datasets/epsilon_experiment"
+    # for_each_dataset(dir, plot_epsilon_experiment)
 
 if __name__ == "__main__":
     main()
