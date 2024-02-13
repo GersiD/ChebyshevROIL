@@ -736,12 +736,30 @@
   eprint = {1901.02161},
 }
 
-@article{IRLSurvey2020,
-  title = {"A Survey of Inverse Reinforcement Learning: Challenges, Methods and
-           Progress"},
-  author = {Arora Saurabh, Doshi Prashant},
-    journal = "arxiv",
+@article{Arora2020,
+  title = {A {{Survey}} of {{Inverse Reinforcement Learning}}: {{Challenges}}, {{Methods}} and {{Progress}}},
+  shorttitle = {A {{Survey}} of {{Inverse Reinforcement Learning}}},
+  author = {Arora, Saurabh and Doshi, Prashant},
   year = {2020},
+  month = nov,
+  journal = {arXiv:1806.06877 [cs, stat]},
+  eprint = {1806.06877},
+  primaryclass = {cs, stat},
+  urldate = {2021-02-18},
+  abstract = {Inverse reinforcement learning is the problem of inferring the reward function of an observed agent, given its policy or behavior. Researchers perceive IRL both as a problem and as a class of methods. By categorically surveying the current literature in IRL, this article serves as a reference for researchers and practitioners in machine learning to understand the challenges of IRL and select the approaches best suited for the problem on hand. The survey formally introduces the IRL problem along with its central challenges which include accurate inference, generalizability, correctness of prior knowledge, and growth in solution complexity with problem size. The article elaborates how the current methods mitigate these challenges. We further discuss the extensions of traditional IRL methods: (i) inaccurate and incomplete perception, (ii) incomplete model, (iii) multiple rewards, and (iv) non-linear reward functions. This discussion concludes with some broad advances in the research area and currently open research questions.},
+  archiveprefix = {arxiv},
+  langid = {english},
+  keywords = {Computer Science - Machine Learning,Statistics - Machine Learning},
+  file = {/home/marek/Zotero/storage/V6ZYKE4R/Arora and Doshi - 2020 - A Survey of Inverse Reinforcement Learning Challe.pdf}
+}
+
+@inproceedings{Ramponi2021,
+  title = {Efficient {{Inverse Reinforcement Learning}} of {{Transferable Rewards}}},
+  booktitle = {Workshop on {{Reinforcement Learning Theory}}},
+  author = {Ramponi, Giorgia and Metelli, Alberto Maria and Restelli, Marcello},
+  year = {2021},
+  abstract = {The reward function is widely accepted as a succinct, robust, and transferable representation of a task. Typical approaches, at the basis of Inverse Reinforcement Learning (IRL), leverage on expert demonstrations to recover a reward function. In this paper, we study the theoretical properties of the class of reward functions that are compatible with the expert's behavior. We analyze how the limited knowledge of the expert's policy and the environment affects the reward reconstruction phase. Then, we examine how the error propagates to the learned policy's performance when transferring the reward function to a different environment. We employ these findings to devise a provably efficient active sampling approach, aware of the need for transferring the reward function, that can be paired with a large variety of IRL algorithms.},
+  file = {/home/marek/Zotero/storage/KIW45LN7/Ramponi et al. - Efficient Inverse Reinforcement Learning of Transf.pdf}
 }
 
 @article{Ho2016,
@@ -757,4 +775,90 @@
 to No-Regret Online Learning"},
     journal = "AISTATS",
     year = {2011}, 
+}
+@inproceedings{Brown2020,
+  title = {Bayesian Robust Optimization for Imitation Learning},
+  booktitle = {Advances in {{Neural Information Processing Systems}} ({{NeurIPS}})},
+  author = {Brown, Daniel S. and Niekum, Scott and Petrik, Marek},
+  year = {2020},
+  eprint = {2007.12315},
+  abstract = {One of the main challenges in imitation learning is determining what action an agent should take when outside the state distribution of the demonstrations. Inverse reinforcement learning (IRL) can enable generalization to new states by learning a parameterized reward function, but these approaches still face uncertainty over the true reward function and corresponding optimal policy. Existing safe imitation learning approaches based on IRL deal with this uncertainty using a maxmin framework that optimizes a policy under the assumption of an adversarial reward function, whereas risk-neutral IRL approaches either optimize a policy for the mean or MAP reward function. While completely ignoring risk can lead to overly aggressive and unsafe policies, optimizing in a fully adversarial sense is also problematic as it can lead to overly conservative policies that perform poorly in practice. To provide a bridge between these two extremes, we propose Bayesian Robust Optimization for Imitation Learning (BROIL). BROIL leverages Bayesian reward function inference and a user specific risk tolerance to efficiently optimize a robust policy that balances expected return and conditional value at risk. Our empirical results show that BROIL provides a natural way to interpolate between return-maximizing and risk-minimizing behaviors and outperforms existing risk-sensitive and risk-neutral inverse reinforcement learning algorithms.},
+  archiveprefix = {arxiv},
+  copyright = {All rights reserved},
+  file = {/home/marek/Zotero/storage/HMUY3CSE/Brown, Niekum, Petrik - 2020 - Bayesian Robust Optimization for Imitation Learning.pdf}
+}
+
+@inproceedings{Brown2020a,
+  title = {Safe {{Imitation Learning}} via {{Fast Bayesian Reward Inference}} from {{Preferences}}},
+  booktitle = {International {{Conference}} on {{Machine Learning}} ({{ICML}})},
+  author = {Brown, Daniel and Coleman, Russell and Srinivasan, Ravi and Niekum, Scott},
+  year = {2020},
+  month = nov,
+  pages = {1165--1177},
+  publisher = {{PMLR}},
+  issn = {2640-3498},
+  urldate = {2021-11-02},
+  abstract = {Bayesian reward learning from demonstrations enables rigorous safety and uncertainty analysis when performing imitation learning. However, Bayesian reward learning methods are typically computationally intractable for complex control problems. We propose Bayesian Reward Extrapolation (Bayesian REX), a highly efficient Bayesian reward learning algorithm that scales to high-dimensional imitation learning problems by pre-training a low-dimensional feature encoding via self-supervised tasks and then leveraging preferences over demonstrations to perform fast Bayesian inference. Bayesian REX can learn to play Atari games from demonstrations, without access to the game score and can generate 100,000 samples from the posterior over reward functions in only 5 minutes on a personal laptop. Bayesian REX also results in imitation learning performance that is competitive with or better than state-of-the-art methods that only learn point estimates of the reward function. Finally, Bayesian REX enables efficient high-confidence policy evaluation without having access to samples of the reward function. These high-confidence performance bounds can be used to rank the performance and risk of a variety of evaluation policies and provide a way to detect reward hacking behaviors.},
+  langid = {english},
+  file = {/home/marek/Zotero/storage/96W6TTUH/Brown et al. - 2020 - Safe Imitation Learning via Fast Bayesian Reward I.pdf;/home/marek/Zotero/storage/Y59SEZR5/Brown et al. - 2020 - Safe Imitation Learning via Fast Bayesian Reward I.pdf}
+}
+
+@inproceedings{Javed2021,
+  title = {Policy Gradient {{Bayesian}} Robust Optimization for Imitation Learning},
+  booktitle = {International {{Conference}} on {{Machine Learning}} ({{ICML}})},
+  author = {Javed, Zaynah and Brown, Daniel and Sharma, Satvik and Zhu, Jerry and Balakrishna, Ashwin and Petrik, Marek and Dragan, Anca and Goldberg, Ken},
+  year = {2021},
+  copyright = {All rights reserved}
+}
+
+@inproceedings{Lacotte2019,
+  title = {Risk-Sensitive Generative Adversarial Imitation Learning},
+  booktitle = {Artificial {{Intelligence}} and {{Statistics}} ({{AISTATS}})},
+  author = {Lacotte, Jonathan and Ghavamzadeh, Mohammad and Chow, Yinlam and Pavone, Marco},
+  year = {2019},
+  eprint = {1808.04468v2},
+  archiveprefix = {arxiv},
+  file = {/home/marek/Zotero/storage/JI7KMBEA/Lacotte et al. - 2019 - Risk-Sensitive Generative Adversarial Imitation Learning.pdf}
+}
+
+@inproceedings{Panaganti2023,
+  title = {Distributionally {{Robust Behavioral Cloning}} for {{Robust Imitation Learning}}},
+  booktitle = {Conference on {{Decision}} and {{Control}}},
+  author = {Panaganti, Kishnan and Xu, Zaiyan and Kalathil, Dileep and Ghavamzadeh, Mohammad},
+  year = {2023},
+  keywords = {\_tablet},
+  file = {/home/marek/Zotero/storage/6IH5MYN5/Panaganti et al_2023_Distributionally Robust Behavioral.pdf}
+}
+
+@article{Rashidinejad2022,
+  title = {Bridging Offline Reinforcement Learning and Imitation Learning: A Tale of Pessimism},
+  shorttitle = {Bridging Offline Reinforcement Learning and Imitation Learning},
+  author = {Rashidinejad, Paria and Zhu, Banghua and Ma, Cong and Jiao, Jiantao and Russell, Stuart},
+  year = {2022},
+  month = dec,
+  journal = {IEEE Transactions on Information Theory},
+  volume = {68},
+  number = {12},
+  pages = {8156--8196},
+  issn = {1557-9654},
+  doi = {10.1109/TIT.2022.3185139},
+  abstract = {Offline reinforcement learning (RL) algorithms seek to learn an optimal policy from a fixed dataset without active data collection. Based on the composition of the offline dataset, two main methods are used: imitation learning which is suitable for expert datasets, and vanilla offline RL which often requires uniform coverage datasets. From a practical standpoint, datasets often deviate from these two extremes and the exact data composition is usually unknown. To bridge this gap, we present a new offline RL framework, called single-policy concentrability, that smoothly interpolates between the two extremes of data composition, hence unifying imitation learning and vanilla offline RL. Under this new framework, we ask: can one develop an algorithm that achieves a minimax optimal rate adaptive to unknown data composition? To address this question, we consider a lower confidence bound (LCB) algorithm developed based on pessimism in the face of uncertainty in offline RL. We study finite-sample properties of LCB as well as information-theoretic limits in multi-armed bandits, contextual bandits, and Markov decision processes (MDPs). Our analysis reveals surprising facts about optimality rates. In particular, in both contextual bandits and RL, LCB achieves a fast convergence rate for nearly-expert datasets, analogous to the one achieved by imitation learning, contrary to the slow rate achieved in offline RL. In contextual bandits, we prove that LCB is adaptively optimal for the entire data composition range, achieving a smooth transition from imitation learning to offline RL. We further show that LCB is almost adaptively optimal in MDPs.},
+  keywords = {adaptive optimality,Behavioral sciences,Cloning,Data collection,Data models,imitation learning,lower confidence bound (LCB),Markov processes,offline reinforcement learning,Reinforcement learning,Reinforcement learning theory,Uncertainty},
+  file = {/home/marek/Zotero/storage/K8Z6ZLFL/Rashidinejad et al_2022_Bridging Offline Reinforcement Learning.pdf}
+}
+
+@article{Spencer2021,
+  title = {Feedback in Imitation Learning: The Three Regimes of Covariate Shift},
+  shorttitle = {Feedback in Imitation Learning},
+  author = {Spencer, Jonathan and Choudhury, Sanjiban and Venkatraman, Arun and Ziebart, Brian and Bagnell, J. Andrew},
+  year = {2021},
+  month = feb,
+  journal = {arXiv:2102.02872 [cs, stat]},
+  eprint = {2102.02872},
+  primaryclass = {cs, stat},
+  urldate = {2022-05-11},
+  abstract = {Imitation learning practitioners have often noted that conditioning policies on previous actions leads to a dramatic divergence between "held out" error and performance of the learner in situ. Interactive approaches can provably address this divergence but require repeated querying of a demonstrator. Recent work identifies this divergence as stemming from a "causal confound" in predicting the current action, and seek to ablate causal aspects of current state using tools from causal inference. In this work, we argue instead that this divergence is simply another manifestation of covariate shift, exacerbated particularly by settings of feedback between decisions and input features. The learner often comes to rely on features that are strongly predictive of decisions, but are subject to strong covariate shift. Our work demonstrates a broad class of problems where this shift can be mitigated, both theoretically and practically, by taking advantage of a simulator but without any further querying of expert demonstration. We analyze existing benchmarks used to test imitation learning approaches and find that these benchmarks are realizable and simple and thus insufficient for capturing the harder regimes of error compounding seen in real-world decision making problems. We find, in a surprising contrast with previous literature, but consistent with our theory, that naive behavioral cloning provides excellent results. We detail the need for new standardized benchmarks that capture the phenomena seen in robotics problems.},
+  archiveprefix = {arxiv},
+  keywords = {Computer Science - Machine Learning,Computer Science - Robotics,Statistics - Machine Learning},
+  file = {/home/marek/Zotero/storage/KG5KWSH9/Spencer et al. - 2021 - Feedback in Imitation Learning The Three Regimes .pdf;/home/marek/Zotero/storage/T2CHS4E7/2102.html}
 }
