@@ -102,35 +102,43 @@ Before describing the underlying MDP framework~\cite{Puterman1994} and formally 
 
 As is usual in IRL literature, we assume that the domain can be modeled as a \emph{Markov Decision Process} with a finite number of states $\mathcal{S} = \left\{ 1, \dots , S \right\}$ and a finite number of actions $\mathcal{A} = \left\{ 1, \dots , A \right\}$. The transition probability function $p\colon \mathcal{S} \times \mathcal{A} \to \Delta^{\mathcal{S}}$, where $\Delta^{\mathcal{S}} = \left\{ x\in \Real_{+}^S \mid \sum_{s\in \mathcal{S}} x_s =1 \right\}$ is the probability simplex over the elements of the set $\mathcal{S}$. The reward function $r\opt \colon \mathcal{S} \times \mathcal{A} \to \Real$ represents the reward obtained in each transition. The initial distribution over states is denoted by $p_0\in \Delta^S$. 
 
-A solution to an MDP is a \emph{policy}. In this work, we restrict our attention to stationary randomized and deterministic policies. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. Note that randomized policies are a special case of deterministic policies. 
+A solution to an MDP is a \emph{policy}. In this work, we restrict our attention to \emph{stationary randomized} and \emph{deterministic} policies. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. Note that randomized policies are a special case of deterministic policies. 
 
-We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$. 
+We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_R \cup \Pi_D$.
 
 The objective in this work is the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. We denote the  infinite-horizon discounted \emph{return} of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by 
-\[\rho(\pi, r) = \lim_{T\to\infty} \sum_{t=0}^{T} \gamma^t r(s_t,\pi(s_t))\]
-where $s_0 \sim p_0$ and $s_{t+1} \sim p(s_t, \pi(s_t)$. 
-The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_R = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_R \cup \Pi_D$.
+\[
+  \rho(\pi, r)
+  \;=\; \lim_{T\to\infty} \mathbb{E}^{\pi, p_0} \left[   \sum_{t=0}^{T} \gamma^t r(\tilde{s}_t,\tilde{a}_t)) \right], 
+\]
+where the subscript on the expectation indicates that $\tilde{s}_0 \sim p_0$ and $\tilde{s}_{t+1} \sim p(\tilde{s}_t,\tilde{a}_t, \cdot)$, and $\tilde{a}_t \sim \pi(\tilde{s}_t, \cdot )$.  The return $\rho$ is parametrized by the reward because in the IRL setting, the reward is uncertain. 
 
 
-It will be convenient to treat functions that map states and actions to real numbers as vectors, such as the reward function $r\opt$. When vectors or matrices are indexed by a state, action pair $(s,a)$; they are assumed to iterate over states first then actions.
-An important fact that we will need to develop our algorithms is the well-known relation between the occupancy frequencies and policies. In particular, for each policy $\pi\in\Pi_R$
-there exists an occupancy frequency $u_{\pi}\in \Real^{\mathcal{S}\times \mathcal{A}}$. The space of occupancy frequencies for all $\pi\in \Pi_R$
-is denoted as $\mathcal{U}$ and is discussed in depth in~\cite{Puterman1994}:
+It will be convenient to treat functions that map states and actions to real numbers as vectors, such as the reward function $r\opt \in \Real^{S \times  A}$. When vectors or matrices are indexed by a state, action pair $(s,a)$; they are assumed to iterate over states first then actions. \mm{can we say that the order is arbitrary, but fixed?} We also use $P_{\pi} \in \Real_+^{S \times S}$ and $r_{\pi}\in \Real^S$  to represent the transition probability matrix and reward vector respectively for each policy $\pi\in \Pi$. Similarly, $P_a$ and $r_a$ represent the transition probablity matrix and a reward vector respectively for each action $a\in \mathcal{A}$.
+
+An important and well-known fact that we use heavily is the relation between the occupancy frequencies and policies. In particular, for each policy $\pi\in\Pi_R$ there exists an occupancy frequency $u_{\pi}\in \Real^{\mathcal{S}\times \mathcal{A}}$ such that $\rho(\pi, r) = u_{\pi}\tr r_{\pi}$. The space of occupancy frequencies for all $\pi\in \Pi_R$
+is denoted as $\mathcal{U}$ and satisfies~\cite[Section~6.9]{Puterman1994}:
 \[
   \mathcal{U}
-  = \Bigl\{ u\in \Real^{SA}_{+} \mid \sum_{a\in \mathcal{A}} (I - \gamma\cdot P\tr_a) u(\cdot, a) = p_0 \Bigr\}~.
+  =
+\left\{ u_{\pi} \mid  \pi \in \Pi \right\}
+  = \Bigl\{ u\in \Real^{SA}_{+} \mid \sum_{a\in \mathcal{A}} (I - \gamma\cdot P\tr_a) u(\cdot, a) = p_0 \Bigr\}.
 \]
+Finally, for each $u\in \mathcal{U}$, one can construct a policy $\pi$ such that $u_{\pi} = u$~\cite[Theorem~6.9.1]{Puterman1994}.
+
 
 %\paragraph{Inverse Reinforcement Learning}
 
-We assume that the expert follows a deterministic policy $\pi_e$. And that we follow a distribution $d_b \subset \Delta^{\mathcal{S}}$ which produces a dataset of (possibly non-sequential) trajectories \[
-  \mathcal{D} = {(\tilde{s_i}, \pi_e(s_i))}_{i=1}^D,
+We are now ready to describe the general IRL framework. Recall that the main goal is to learn to act in an environment without knowing the true reward function $r\opt$. Instead we have access to transition data generated from an expert's policy $\pi_e \in \Pi_D$. To simplify the exposition, we assume that the expert follows a deterministic policy and discuss generalizations to randomized policies in \cref{sec:optimization-formulation}.
+And that we follow a distribution $d_b \subset \Delta^{\mathcal{S}}$ which produces a dataset of (possibly non-sequential) trajectories
+\[
+  \mathcal{D} = {(s_i, \pi_e(s_i))}_{i=1}^D
 \]
 % where $\tilde{s_i} \sim d_b$.
 
 % In this work, we aim to develop a robust algorithm which can learn a policy that is consistent with the expert when our given demonstrations, $\mathcal{D}$, demonstrate actions in a small subset of the set $\mathcal{S}$ in a non-sequential manner.
 
-% %Non-sequential, in this context, means that the dataset $\mathcal{D}$ may have state, action tuples where $s_{t+1}$ is not distributed accoding to $P(\cdot | s_t, a_t)$. 
+% %Non-sequential, in this context, means that the dataset $\mathcal{D}$ may have state, action tupleswhere $s_{t+1}$ is not distributed accoding to $P(\cdot | s_t, a_t)$. 
 
 % To enable the generalization of the learned reward function, we assume to be given a feature function $\phi: \mathcal{S} \times \mathcal{A}\to \Real^k$. That is, for each state and action there are $k$ features which represent some heuristic regarding the respective state and action. Through an arbitrary ordering of states, we can represent our features with a feature matrix $\Phi \subset \Real^{SA\times k}$. Note that while any ordering of state, action pairs is sufficient, in this paper we will assume the following without loss of generality.
 % % \begin{enumerate}
@@ -344,7 +352,7 @@ As is often the case we have introduced 4 dual variables in out LP which have un
     \includegraphics[width=0.45\textwidth]{../notebooks/plots/visual_U_and_Upsilon.pdf}
     \includegraphics[width=0.45\textwidth]{../notebooks/plots/visual_solve_cheb.pdf}
     %\includegraphics[width=0.45\textwidth]{../notebooks/plots/visual_solve_cheb_outside_upsilon.pdf}
-    \caption{Visual depiction of ROIL as a Chebyshev center of the set $\Upsilon$. \mm{Perhaps use a dashed line to represent the ``circle''?}}
+    \caption{Visual depiction of ROIL as a Chebyshev center of the set $\Upsilon$.}
     \label{fig:visual_representation_of_ROIL}
 \end{figure}
 
@@ -359,8 +367,9 @@ In this section, we describe an extension of ROIL that allows one to control for
 For example, one might want to model LPAL this way.
 %
 \begin{equation}
+\label{linf_constraint}
 	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid  
- \| (u - \hat{u_e})\tr \Phi \| \le \epsilon 
+ \| (u - \hat{u_e})\tr \Phi \| \le \eps 
  \right\}~.
 \end{equation}
 \begin{equation}
@@ -374,6 +383,7 @@ Let's try and generalize the above formulation, and lets hold off on applying th
 %
 \begin{equation}
 \begin{aligned}
+    \label{eq:new_robust_IRL}
     &\min_{u \in \mathcal{U}} \max_{v \in \Upsilon} \max_{r \in \mathcal{R}} v\tr r - u\tr r \\
     &=\min_{u \in \mathcal{U}} \max_{r \in \ext(\mathcal{R})} \max_{v \in \Upsilon} v\tr r - u\tr r \\
     &=\min_{u \in \mathcal{U}} \max_{r \in \ext(\mathcal{R})} (-u\tr r + \max_{v \in \Upsilon} v\tr r) \\
@@ -398,6 +408,28 @@ To solve the inner maximization we assume that the constraints on $\Upsilon$ are
         \cs g_j(v) \leq 0
     \end{mprog}
 \end{equation}
+
+Let $u_R(\eps)$ be the minimizer of \ref{eq:new_robust_IRL} when the set $\Upsilon$ is defined as in \ref{linf_constraint}, and let $f_R(\eps)$ be the objective value achieved by $u_R(\eps)$.
+Let $f_t$ be the objective value of 
+%
+\[\max_{r\in\mathcal{R}} r\tr (u_e - u_r(\eps))\]
+%
+then 
+%
+\[f_t \leq f_R(e_t)\]
+\[f_R(\eps_t) = \min_{u \in \Upsilon(\eps_t)} \max_{v \in \Upsilon(\eps_t)} \lvert\lvert \Phi\tr (v-u) \rvert\rvert_\infty\]
+\[\geq \min_{\mu \in \mathcal{U}} \lvert\lvert \Phi\tr (u_e - \mu) \rvert\rvert_\infty \geq f_t\]
+%  
+\begin{restatable}[Regret Bounds]{thm}{roilRegretBound}
+\label{roilRegretBound}
+The regret of a occupancy frequency $u_R(\eps)$ which minimizes \ref{eq:new_robust_IRL} $\leq \eps_t + \eps$
+where $\eps_t = \lvert\lvert \Phi\tr (\hat{u_e} - u_e) \rvert\rvert_\infty$.
+\end{restatable}
+\begin{proof}
+    \[f_t = \max_{r\in\mathcal{R}} r\tr(u_e - u_R(\eps)) = \lvert\lvert \Phi\tr (u_e - u_R(\eps)) \rvert\rvert_\infty \leq \lvert\lvert \Phi\tr (u_e - \hat{u_e} + \hat{u_e} - u_R(\eps)\rvert\rvert_\infty\]
+    \[\leq \lvert\lvert \Phi\tr (u_e-\hat{u_e}) \rvert\rvert_\infty + \lvert\lvert \Phi\tr (\hat{u_e} - u_R(\eps)) \rvert\rvert_\infty\]
+    \[\leq \eps_t + \eps\]
+\end{proof}
 
 \section{Analysis}
 \mm{Things to show:
