@@ -58,7 +58,7 @@ def plot_returns(plotter: Plotter):
 
 def plot_epsilon_experiment(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    ignore_columns = ["dataset_size", "EstLInfDiff", "NBC", "Epsilon", "Random", "Optimal", "True_Epsilon", "LPAL_Rad"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "True_Epsilon", "LPAL_Rad"]
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     for col in plotter.df.columns:
         if col not in ignore_columns:
