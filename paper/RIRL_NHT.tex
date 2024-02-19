@@ -50,7 +50,8 @@
 \setlength{\parskip}{3mm plus 1mm minus 1mm}
 \setlength{\parindent}{0pt}
 
-\title{ROIL: Robust Inverse Reinforcement Learning Without Trajectories}
+\title{ROIL: Robust Inverse Reinforcement Learning\\
+  without Trajectories}
 \author{Gersi Doko \\
         Gersi.Doko@unh.edu \\
         \and 
@@ -372,12 +373,12 @@ For example, one might want to model LPAL this way.
  \| (u - \hat{u_e})\tr \Phi \| \le \eps 
  \right\}~.
 \end{equation}
-\begin{equation}
-	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid  
- \| d_u - \hat{d} \| \le \epsilon_1, 
- \| \pi_u - \hat{\pi} \| \le \epsilon_2
- \right\}~.
-\end{equation}
+% \begin{equation}
+% 	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid  
+%  \| d_u - \hat{d} \| \le \epsilon_1, 
+%  \| \pi_u - \hat{\pi} \| \le \epsilon_2
+%  \right\}~.
+% \end{equation}
 %
 Let's try and generalize the above formulation, and lets hold off on applying the dual norm so quickly.
 %
@@ -516,7 +517,7 @@ Now we show that minimizing either the GAIL or LPAL objective given the above da
 	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/lpal_loss.pdf}
 	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/gail_loss.pdf}
 	\caption{The loss functions of LPAL and GAIL. Here JSD refers to the Jensen-Shannon Divergence which is the loss function minimized by GAIL when the coefficient of the 
- causal entropy term H is 0~\cite{Ho2016}.}
+ causal entropy term H is zero~\cite{Ho2016}.}
 	\label{fig:loss_of_LPAL_GAIL}
 \end{figure}
 
@@ -530,6 +531,7 @@ Now we show that minimizing either the GAIL or LPAL objective given the above da
 \end{enumerate}
 
 \begin{figure}[htbp]
+    \label{fig:20x20_results}
 	\centering
 	\includegraphics[width=0.45\textwidth]{../src/plots/returns/20x20_gridworld_on_policy_returns.pdf}
 	\includegraphics[width=0.45\textwidth]{../src/plots/returns/20x20_gridworld_off_policy_returns.pdf}
@@ -538,12 +540,25 @@ Now we show that minimizing either the GAIL or LPAL objective given the above da
 \end{figure}
 
 \begin{figure}[htbp]
+    \label{fig:40x40_results}
 	\centering
 	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_on_policy_returns.pdf}
 	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_off_policy_returns.pdf}
 	\caption{On and off policy performance of IRL methods on 40x40 grid world}
 	\label{fig:off_policy_vs_on_40}
 \end{figure}
+
+We test the performance of ROIL in two domains, one being a colored grid-world where each square is designated a color and a reward function is written as a linear combination of the rewards satisfying that $r^* = \Phi\tr w$ for some $w \in \mathcal{W}$. 
+The actor has a choice of up, down, left, and right as their actions, and there is some noise to their transition. 
+The other environment is a driving simulator where an actor begins in the bottom row and has the choice of going straight up, up and to the left, or up and to the right. 
+At the first row, the actor loops around back to the bottom row to simulate a continuous environment. Likewise, the driving simulator has some small noise in the transitions. The driving simulator has some motorists on the road which the actor must avoid, and the left-most and right-most columns are designated "bumpers" where the actor receives negative rewards.
+
+To simulate off-policy data we choose a behavior policy $\pi_b$ to be the uniform random policy, that is $\pi_b(a|s) = \frac{1}{\lvert \mathcal{A} \rvert}$. $\pi_b$ controls the transition dynamics, that is $\tilde{s_{t+1}} \sim P(\tilde{s_t}, \pi_b(\tilde{s_t}))$, and $\pi_e$ chooses what action to include in the dataset for the current state. This off-policy regime makes it difficult to recover the expert for any method that relies solely on $\hat{u_e}$ which is the estimated occupancy frequency given the expert dataset.
+
+Figures \ref{fig:20x20_results} and \ref{fig:40x40_results} show the results of ROIL across many dataset sizes and include comparisons to other methods. As was our goal, ROIL performs well when
+there is covariate shift present in the dataset. While other methods continue to converge to $\pi_b$, ROIL converges to the optimal. In the on-policy case, when $\pi_e$ controls both the transition dynamics and generates the actions for the dataset, we see that ROIL does not converge as quickly as other methods that rely on and trust the accuracy of $\hat{u_e}$. As is often the case, we pay for the robustness of our approach when it is not needed \cite{}.
+
+ADD WHY BC DOES WELL AND GAIL SO POORLY
 
 \section{Conclusion}
 % \begin{enumerate}
