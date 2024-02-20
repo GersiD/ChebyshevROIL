@@ -117,7 +117,7 @@ class MDP(object):
                 if sum_u_s[s] > 1.0e-10:
                     policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
                 else: # if the sum is 0, then we have a uniform policy
-                    policy[s, :] = 1.0 / A
+                    policy[s, 0] = 1.0
         return policy
 
     def generate_samples_from_policy(
