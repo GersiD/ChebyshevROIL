@@ -125,56 +125,32 @@ is denoted as $\mathcal{U}$ and satisfies~\cite[Section~6.9]{Puterman1994}:
 \left\{ u_{\pi} \mid  \pi \in \Pi \right\}
   = \Bigl\{ u\in \Real^{SA}_{+} \mid \sum_{a\in \mathcal{A}} (I - \gamma\cdot P\tr_a) u(\cdot, a) = p_0 \Bigr\}.
 \]
-Finally, for each $u\in \mathcal{U}$, one can construct a policy $\pi$ such that $u_{\pi} = u$~\cite[Theorem~6.9.1]{Puterman1994}.
+Finally, for each $u\in \mathcal{U}$, one can construct a policy $\pi$ such that $u_{\pi} = u$~\cite[Theorem~6.9.1]{Puterman1994} as
+\begin{equation}\label{eq:policy-construction}
+	\pi(s, a) \; =\;  u(s,a) / \sum_{a' \in \mathcal{A}} u(s,a'), \qquad \forall s\in \mathcal{S}, a\in \mathcal{A}.
+\end{equation}
 
 
 %\paragraph{Inverse Reinforcement Learning}
 
-We are now ready to describe the general IRL framework. Recall that the main goal is to learn to act in an environment without knowing the true reward function $r\opt$. Instead we have access to transition data generated from an expert's policy $\pi_e \in \Pi_D$. To simplify the exposition, we assume that the expert follows a deterministic policy and discuss generalizations to randomized policies in \cref{sec:optimization-formulation}.
-And that we follow a distribution $d_b \subset \Delta^{\mathcal{S}}$ which produces a dataset of (possibly non-sequential) trajectories
+With the defitions above, we are now ready to describe the general IRL framework. Recall that the main goal is to learn to act in an environment without knowing the true reward function $r\opt$. Instead we have access to transition data generated from an expert's policy $\pi_e \in \Pi_D$. To simplify the exposition, we assume that the expert follows a deterministic policy and discuss generalizations to randomized policies in \cref{sec:optimization-formulation}. The IRL algorithm has access to a dataset  \( \mathcal{D} = {(s_i, \pi_e(s_i))}_{i=1}^D \), where the states may or may not be selected sequentially from state trajectories.
+
+To enable a generalization from a small state set, most IRL algorithms assume a feature function $\phi\colon \mathcal{S} \times \mathcal{A}\to \Real^k$ that assigns $k$ features  to each state and action~\cite{Syed2008,Lacotte2019,chang2021mitigating}. The features $\phi$ represent characteristics of the state-action pair that can determine the reward associates with them. We can represent our features with a feature matrix $\Phi \in \Real^{SA\times k}$ where each row represents the features of a specific state and action. Linear IRL algorithms assume that rewards can be expressed as a linear combination of state and action features. Formally, the set $\mathcal{R} \subseteq \Real^{SA}$ of \emph{feasible rewards} is defined as
 \[
-  \mathcal{D} = {(s_i, \pi_e(s_i))}_{i=1}^D
+  \mathcal{R} = \left\{ \Phi w \mid  w\in \mathcal{W} \right\}, \quad
+  \text{where} \quad
+  \mathcal{W} = \left\{ w \in \Real^k \mid \| w \|_1 \le 1 \right\}. 
 \]
-% where $\tilde{s_i} \sim d_b$.
+The $L_1$ norm in the definition of $\mathcal{W}$ serves to normalize $w$ and prevent hyper-scaling of the learned parameter. Note that this restriction is important because the scale of the rewards does not affect optimal polices and thus cannot be estimated from the expert demonstrations $\mathcal{D}$ alone.
 
-% In this work, we aim to develop a robust algorithm which can learn a policy that is consistent with the expert when our given demonstrations, $\mathcal{D}$, demonstrate actions in a small subset of the set $\mathcal{S}$ in a non-sequential manner.
-
-% %Non-sequential, in this context, means that the dataset $\mathcal{D}$ may have state, action tupleswhere $s_{t+1}$ is not distributed accoding to $P(\cdot | s_t, a_t)$. 
-
-% To enable the generalization of the learned reward function, we assume to be given a feature function $\phi: \mathcal{S} \times \mathcal{A}\to \Real^k$. That is, for each state and action there are $k$ features which represent some heuristic regarding the respective state and action. Through an arbitrary ordering of states, we can represent our features with a feature matrix $\Phi \subset \Real^{SA\times k}$. Note that while any ordering of state, action pairs is sufficient, in this paper we will assume the following without loss of generality.
-% % \begin{enumerate}
-% % 	\item We are given some ordering of states, $\mathcal{S} = \{ s_1, s_2, \dots, s_i \}$
-% % 	\item We are given some ordering of actions, $\mathcal{A} = \{ a_1, a_2, \dots, a_j \}$.
-% % 	\item 
-% % \end{enumerate}
-% % \mm{the last bullet above is useful}
-
-% % When vectors or matrices are indexed by a state, action pair $(s,a)$; they are assumed to iterate over states first then actions.
-
-% We use $\mathcal{R} \subseteq \Real^{\mathcal{S} \times \mathcal{A}}$ to denote the set of possible rewards.
-
-% In this paper we investigate linear reward function approximation, that is we seek to find a $w \in \mathcal{W} \subseteq \Real^k$ s.t. $r\opt(s, a) = w\tr
-% 	\phi(s,a)$ $\forall s \in \mathcal{S}$, $\forall a \in \mathcal{A}$. To
-where $\tilde{s_i} \sim d_b$. Our goal can be written as the following optimization problem,
+Most IRL algorithms adopt the following scheme. The true reward $r\opt$ is unknown but is assumed to satisfy that $r\opt \in \mathcal{R}$. Algorithms as varied as LPAL~\cite{Syed2008}, GAIL~\cite{Ho2016}, and MILO~\cite{chang2021mitigating} seek to compute a policy that minimizes the worst-case regret with respect the expert's policy. In its essence the regret minimization problem is usually formalized as
 \begin{equation} \label{eq:IRL_formulation}
-	\min_{\pi \in \Pi} \max_{r \in \mathcal{R}} \; (\rho(\pi_e, r) - \rho(\pi, r)).
+\min_{\pi \in \Pi} \max_{r \in \mathcal{R}} \; \Bigl( \rho(\pi_e, r) - \rho(\pi, r) \Bigr).
 \end{equation}
-In this work, we aim to develop a robust algorithm which can learn a policy that is
-consistent with the expert when our given demonstrations, $\mathcal{D}$, demonstrate actions in a small subset of the set $\mathcal{S}$ in a non-sequential manner.
+Specific IRL algorithms usually add other regularization an penalty to the scheme in \eqref{eq:IRL_formulation}, but we omit them in this work in order to focus on the fundamental properties of this formulation.  An important limitation of the formulation in \eqref{eq:IRL_formulation} is that it implicitly relies on knowing or estimating the expert's policy $\pi_e$ well. In the remainder of the paper, we build on \eqref{eq:IRL_formulation} and propose new robust algorithms that relax the requirement that $\pi_e$ is estimated well.
 
 %Non-sequential, in this context, means that the dataset $\mathcal{D}$ may have state, action tuples where $s_{t+1}$ is not distributed accoding to $P(\cdot | s_t, a_t)$. 
 
-To enable generalization, we assume to be given a feature function $\phi: \mathcal{S} \times \mathcal{A}\to \Real^k$. That is, for each state and action there are $k$ features which represent some heuristic regarding the respective state and action. Through an arbitrary ordering of states, we can represent our features with a feature matrix $\Phi \subset \Real^{SA\times k}$. Note that for the duration of this paper, we assume that vectors or matrices $\in \Real^{SA}$ iterate by \emph{state first} and then actions.
-
-We consider linear reward function approximation, that is we seek to find a $w \in \mathcal{W} \subseteq \Real^k$ s.t. $r\opt(s, a) = w\tr
-	\phi(s,a) \;\; \forall (s,a) \in \mathcal{S}\times\mathcal{A}$. To
-prevent hyper-scaling of our learned parameter, $w$, we restrict it by
-ensuring its norm is upper bounded by a constant. We consider the following
-form of $w$ regularization;
-\[
-  \mathcal{W} = \left\{ w \in \Real^K
-    \mid \| w \|_1 \le 1 \right\}.
-\]
 
 % The core of most IRL algorithms is to solve the following optimization problem which minimizes the tobust regret with respect to the occupancy frequency of the expert. 
 % \begin{equation} \label{eq:IRL_formulation}
@@ -270,11 +246,6 @@ Next observe that maximizing over $r \in \mathcal{R}$ is equivalent to maximizin
 	\min_{u \in \mathcal{U}} \max_{w \in \mathcal{W}} \max_{v \in \Upsilon} (v - u)^T \Phi w
 \end{equation}
 
-From~\cite{Puterman1994} it is known that we can convert between policies and occupancy frequencies as follows.
-
-\begin{equation}\label{eq:policy-construction}
-	\pi(s, a) = \frac{u^{\pi}(s,a)}{\sum_{a' \in \mathcal{A}} u^{\pi}(s,a')}
-\end{equation}
 
 The following theorem shows the correctness of our approach.
 
@@ -289,9 +260,6 @@ The following theorem shows the correctness of our approach.
 	\]
 \end{restatable}
 
-\begin{proof}
-	Included in the appendix for brevity.
-\end{proof}
 
 When we consider $\mathcal{W} = \Real_{1}$ equation~\eqref{eq:primal-robust-irl} can be simplified using the definition of the dual norm on the maximization
 over $w$. For simplicity, the definition of the dual norm is included here. For $\mathcal{W}$ bounded by some $L_p$ ball $\max_{w \in \mathcal{W}} \Phi w = \|\Phi\|_*$.
