@@ -114,7 +114,10 @@ class MDP(object):
             if force_deterministic:
                 policy[s, np.argmax(u[s, :])] = 1.0
             else:
-                policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
+                if sum_u_s[s] > 1.0e-10:
+                    policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
+                else: # if the sum is 0, then we have a uniform policy
+                    policy[s, :] = 1.0 / A
         return policy
 
     def generate_samples_from_policy(
