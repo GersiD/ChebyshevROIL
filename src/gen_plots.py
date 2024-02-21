@@ -20,7 +20,7 @@ class Plotter(object):
 
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC"]
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
     dataset_sizes.sort()
