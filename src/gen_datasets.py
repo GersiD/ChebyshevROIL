@@ -27,11 +27,13 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list["LPAL"] = lpal_ret
     returns_list["LPAL_LIN"] = lin_lpal_ret
     returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
-    eps, _, _, ret = env.solve_cheb_part_2(D, False, True, 1.5*lin_lpal_rad)
+    eps, _, _, ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
     returns_list["ROIL_LINF"] = ret
-    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, True, True, 1.5*lin_lpal_rad)[3]
+    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)[3]
+    returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
+    returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
     returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
-    returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
+    # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
     u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
     returns_list["NBC"] = u_e_hat_return
     returns_list["EstLInfDiff"] = float(np.linalg.norm(env.u_E - u_e_hat, ord=np.inf))
@@ -127,7 +129,7 @@ def main():
     # generate_dataset(env, False)
     
     # if you want to run multiple experiments
-    generate_datasets_across_env_size([5,10,20,30,40])
+    generate_datasets_across_env_size([30, 40])
 
 if __name__ == "__main__":
     main()
