@@ -22,11 +22,14 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list: dict[str, float] = {}
 
     # add the returns of each u to the list
+    _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
+    _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
+    returns_list["LPAL"] = lpal_ret
+    returns_list["LPAL_LIN"] = lin_lpal_ret
     returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
-    eps, _, _, ret = env.solve_cheb_part_2(D, False, True)
+    eps, _, _, ret = env.solve_cheb_part_2(D, False, True, 1.5*lin_lpal_rad)
     returns_list["ROIL_LINF"] = ret
-    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, True, True)[3]
-    returns_list["LPAL"] = env.solve_syed(D, num_episodes, horizon)[2]
+    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, True, True, 1.5*lin_lpal_rad)[3]
     returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
     returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
     u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)

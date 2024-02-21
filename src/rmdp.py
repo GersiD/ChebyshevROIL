@@ -117,7 +117,7 @@ class MDP(object):
                 if sum_u_s[s] > 1.0e-10:
                     policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
                 else: # if the sum is 0, then we have a uniform policy
-                    policy[s, 0] = 1.0
+                    policy[s, 1] = 1.0
         return policy
 
     def generate_samples_from_policy(
@@ -433,7 +433,7 @@ class MDP(object):
             u_e_hat = self.u_hat_all(D).reshape((self.num_states * self.num_actions), order="F")
         return u_e_hat @ phi
 
-    def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int, u_e_hat = None) -> Tuple[np.ndarray, float, float]:
+    def solve_syed(self, D: List[List[Tuple[int, int]]], episodes: int, horizon: int, u_e_hat = None, add_lin_constr = False) -> Tuple[np.ndarray, float, float]:
         """Solve the LPAL LP from Syed.
         Args:
             D: list of trajectories (which themselves are lists of length horizon)
@@ -460,6 +460,9 @@ class MDP(object):
         model.addConstr(B >= (u@phi) - V_hat)
         model.addConstr(B >= (-1 *(u@phi)) + V_hat)
         model.addMConstr(W.T, u, "==", p_0)
+        if add_lin_constr:
+            c = self.construct_constraint_vector(set(itertools.chain.from_iterable(D)))
+            model.addConstr(c @ u == 0)
 
         # model.write("./" + method + ".lp") # write the model to a file, for debugging
         model.setObjective(B, GRB.MINIMIZE)

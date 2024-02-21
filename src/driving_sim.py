@@ -97,7 +97,7 @@ class DrivingSim(MDP):
         2 - Did the car crash
         3 - Did the car hit the bumpers
         Also Computes Rewards which are a vector of size SA which shows the reward for each state-action pair
-        computed with a linear function of the features with weights w = [0, 0, -0.5, -0.5] which is in the L1 ball of radius 1
+        computed with a linear function of the features with weights w = [0.1, 0.1, 0.4, 0.2] which is in the L1 ball of radius 1
 
         returns phi and rewards
         """
