@@ -6,6 +6,7 @@ from concurrent.futures import ProcessPoolExecutor as Pool
 import pandas as pd
 from rmdp import MDP
 import pickle
+import os
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
 """Mainly for running experiments and generating datasets (csv)"""
@@ -22,27 +23,27 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list: dict[str, float] = {}
 
     # add the returns of each u to the list
-    _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
-    _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
-    returns_list["LPAL"] = lpal_ret
-    returns_list["LPAL_LIN"] = lin_lpal_ret
-    returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
-    eps, _, _, ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
-    returns_list["ROIL_LINF"] = ret
-    returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)[3]
-    returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
-    returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
-    returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
+    # _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
+    # _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
+    # returns_list["LPAL"] = lpal_ret
+    # returns_list["LPAL_LIN"] = lin_lpal_ret
+    # returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
+    # eps, _, _, ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
+    # returns_list["ROIL_LINF"] = ret
+    # returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)[3]
+    # returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
+    # returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
+    # returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
     # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
-    u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
-    returns_list["NBC"] = u_e_hat_return
-    returns_list["EstLInfDiff"] = float(np.linalg.norm(env.u_E - u_e_hat, ord=np.inf))
-    returns_list["Epsilon"] = eps
+    # u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
+    # returns_list["NBC"] = u_e_hat_return
+    # returns_list["EstLInfDiff"] = float(np.linalg.norm(env.u_E - u_e_hat, ord=np.inf))
+    # returns_list["Epsilon"] = eps
     # optimal return
-    returns_list["Optimal"] = env.opt_return
+    # returns_list["Optimal"] = env.opt_return
     # returns_list["Worst"] = env.worst_return
     # random returns
-    returns_list["Random"] = env.random_return
+    # returns_list["Random"] = env.random_return
     D_size = 0
     for d in D:
         D_size += len(d)
@@ -100,25 +101,35 @@ def generate_dataset(env: MDP, off_policy: bool, name: str):
                 for key, value in result.items():
                     returns_per_DS_size.setdefault(key, [])
                     returns_per_DS_size[key].append(value)
-
-    dataset = pd.DataFrame.from_dict(returns_per_DS_size)
     num_rows = int(np.sqrt(env.num_states))
-    dataset.to_csv(f"datasets/{num_rows}x{num_rows}_{name}_{'off' if off_policy else 'on'}_policy.csv", index=False)
+    file_name = f"datasets/{num_rows}x{num_rows}_{name}_{'off' if off_policy else 'on'}_policy.csv"
+    try: # if the file exists, append to it
+        print(f"\033[31m{file_name} already exists, opening...\033[0m")
+        df = pd.read_csv(file_name)
+        keys = list(returns_per_DS_size.keys())
+        for key in keys:
+            # add or replace column as long as it's not the dataset size
+            if key != "dataset_size":
+                print(f"\033[33mReplacing {key} in {file_name}\033[0m") if key in df else print(f"\033[32mAdding {key} to {file_name}\033[0m")
+                df[key] = returns_per_DS_size[key]
+                del returns_per_DS_size[key]
+        df.to_csv(file_name, index=False)
+    except FileNotFoundError:
+        print(f"\033[31mCreating {file_name}\033[0m")
+        dataset = pd.DataFrame.from_dict(returns_per_DS_size)
+        dataset.to_csv(file_name, index=False)
 
 def generate_datasets_across_env_size(env_sizes: List[int]):
     for env_size in env_sizes:
         print(f"Running experiment with {env_size}x{env_size} gridworld!")
-        obstacles = list(np.random.choice((env_size*env_size) - (env_size + 1), env_size, replace=False))
-        env = DrivingSim(env_size, obstacles)
-        # with open(f"envs/{env_size}x{env_size}_driving_env.pkl", "wb") as f:
-        #     pickle.dump(env, f)
-        generate_dataset(env, True, "driving")
-        generate_dataset(env, False, "driving")
-        env = GridWorld(env_size, 0.99)
-        # with open(f"envs/{env_size}x{env_size}_gridworld_env.pkl", "wb") as f:
-        #     pickle.dump(env, f)
-        generate_dataset(env, True, "gridworld")
-        generate_dataset(env, False, "gridworld")
+        with open(f"envs/{env_size}x{env_size}_driving_env.pkl", "rb") as f:
+            env = pickle.load(f)
+            generate_dataset(env, True, "driving")
+            generate_dataset(env, False, "driving")
+        with open(f"envs/{env_size}x{env_size}_gridworld_env.pkl", "rb") as f:
+            env = pickle.load(f)
+            generate_dataset(env, True, "gridworld")
+            generate_dataset(env, False, "gridworld")
 
 def main():
     # np.random.seed(3)
@@ -128,8 +139,24 @@ def main():
     # print(f"Running experiment with {exp_size}x{exp_size} gridworld!")
     # generate_dataset(env, False)
     
+    # Check if envs have been generated before
+    sizes = [5,10,20,30,40]
+    for size in sizes:
+        try:
+            open(f"envs/{size}x{size}_gridworld_env.pkl", "rb")
+        except FileNotFoundError:
+            env = GridWorld(size, 0.99)
+            with open(f"envs/{size}x{size}_gridworld_env.pkl", "wb") as f:
+                pickle.dump(env, f)
+        try:
+            open(f"envs/{size}x{size}_driving_env.pkl", "rb")
+        except FileNotFoundError:
+            obstacles = list(np.random.choice((size*size) - (size + 1), size, replace=False))
+            env = DrivingSim(size, obstacles)
+            with open(f"envs/{size}x{size}_driving_env.pkl", "wb") as f:
+                pickle.dump(env, f)
     # if you want to run multiple experiments
-    generate_datasets_across_env_size([30, 40])
+    generate_datasets_across_env_size(sizes)
 
 if __name__ == "__main__":
     main()
