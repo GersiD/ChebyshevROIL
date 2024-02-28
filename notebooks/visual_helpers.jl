@@ -86,9 +86,9 @@ end
 function calculate_convex_hull(x, y)
     simplices = []
     if length(x) == 2
-        simplices = [(1, 2), (2, 1)] # Convex hull of 2 points is a line
+        simplices = [1 2; 2 1] # Convex hull of 2 points is a line
     elseif length(x) == 1
-        simplices = [(1, 1)] # Convex hull of 1 point is the point itself
+        simplices = [1 1] # Convex hull of 1 point is the point itself
     else
         ch = chull(hcat(x, y))
         simplices = ch.simplices
@@ -105,7 +105,7 @@ function draw_convex_hull(set, plot, color, label, draw_interior=true)
     simplices = calculate_convex_hull(x, y)
 
     draw_interior && scatter!(plot, x, y, marker=:circle, label=label, color=color) # fancy one liner
-    for (i, j) ∈ simplices
+    for (i, j) in eachrow(simplices)
         plot!(plot, [x[i], x[j]], [y[i], y[j]], color=color, label=nothing)
     end
 end
