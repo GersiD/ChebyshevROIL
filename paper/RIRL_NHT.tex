@@ -38,11 +38,11 @@
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 
-\theoremstyle{plain}
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma} 
-\newtheorem{proposition}{Proposition}
-\newtheorem{assumption}{Assumption}
+% \theoremstyle{plain}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{lemma}{Lemma} 
+% \newtheorem{proposition}{Proposition}
+% \newtheorem{assumption}{Assumption}
 \theoremstyle{remark}
 \newtheorem{example}{Example}
 
@@ -55,7 +55,7 @@
 % \setlength{\parskip}{3mm plus 1mm minus 1mm}
 % \setlength{\parindent}{0pt}
 
-\title{ROIL: Robust Inverse Reinforcement Learning\\
+\title{ROIL: Robust Offline Imitation Learning\\
   without Trajectories}
 \author{Gersi Doko \\
         Gersi.Doko@unh.edu \\
@@ -80,24 +80,22 @@ We study inverse reinforcement learning where the agent attempts to learn an exp
 
 \emph{Imitation learning} seeks to compute a good policy in a Markov decision process~(MDP) without knowing the reward function. Instead, one only has access to a set of demonstrations performed by a domain expert~\cite{chang2021mitigating, Panaganti2023, Spencer2021, Rashidinejad2022}. Imitation learning promises techniques that can learn to act well in environments where describing an appropriate reward function may be challenging or impractical. Robotics, medicine, and autonomous driving and examples of problem domains that can benefit greatly from more reliable imitation learning algorithms. 
 
-Inverse Reinforcement Learning~(IRL) is a common approach to imitation learning~\cite{abbeel2004, Javed2021, Brown2020, Brown2018b, Brown2018a}. IRL leverages the environment's dynamics modeled as an MDP to efficiently mimic the observed policy of the expert~\cite{Arora2020}. The environment's dynamics may be known a priori~\cite{Syed2008, lacotte2019} or estimated from data~\cite{chang2021mitigating, Ho2016}. An important strength of IRL algorithms is that they can learn to mimic experts quite well even with remarkably little data. However, most IRL algorithms can be very sensitive to the state distribution in the training data. If the distribution of states present in the dataset does not follow the occupancy frequency---a phenomenon known as \emph{covariate shift}---the IRL algorithm may compute a policy that is much worse than the expert's policy. 
+Inverse Reinforcement Learning~(IRL), or apprenticeship learning, is a common approach to imitation learning~\cite{abbeel2004, ziebart2008maximum, Brown2018a, fu2018learning}. IRL leverages the environment's dynamics modeled as an MDP to efficiently mimic the observed policy of the expert~\cite{arora2021survey}. The environment's dynamics may be known a priori~\cite{Syed2008, lacotte2019} or estimated from data~\cite{Ho2016,chang2021mitigating}. An important strength of IRL algorithms is that they can learn to mimic experts quite well even with remarkably little data. However, most IRL algorithms can be very sensitive to the state distribution in the training data. If the distribution of states present in the dataset does not follow the occupancy frequency---a phenomenon known as \emph{covariate shift}---the IRL algorithm may compute a policy that is much worse than the expert's policy. 
 
-In this paper, we propose ROIL, a new approach to IRL that is particularly resistant to any covariate shift. In particular, ROIL allows for data with a state distribution that does not follow the expert's occupancy frequency. Most existing algorithms are sensitive to covariate shift because, in some form, they reduce to matching the expert's state occupancy frequency. In comparison, ROIL attempts to recover the set of expert's plausible policies from the training data and compute a policy that minimizes the regret with respect to this set of experts.
+In this paper, we propose ROIL, a new approach to IRL that is particularly resistant to any covariate shift. In particular, ROIL allows for data with a state distribution that does not follow the expert's occupancy frequency. Most existing algorithms are sensitive to covariate shift because, in some form, they reduce to matching the expert's state occupancy frequency. In comparison, ROIL attempts to recover the set of plausible expert policies from the training data and compute a policy that minimizes the regret with respect to this set of experts. With an appropriate choice of modeling assumption, we show that ROIL can be formulated as a convex optimization problem and solved using mature solvers.
 
-The regret minimization problem at the heart of ROIL is equivalent to finding the \emph{Chebyshev center} of the set of policies consistent with the observed training data. Computing the Chebyshev center of a set corresponds to finding the center of the smallest circumcircle of a set and is NP-hard in general for polyhedral sets described by linear constraints. However, with an appropriate choice of modeling assumption, we show that ROIL can be formulated as a convex optimization problem and solved using mature solvers.
-
-There are several reasons for why the expert demonstration data may not be sampled according to the true occupancy frequency. First, the expert's initial state distribution may differ from the initial state distribution when the learned policy is deployed. Second, the expert may focus on providing demonstrations that focus on the most challenging parts of the state space. The demonstrations may not even form a trajectory but instead consist of disconnected state-action pairs. The state distribution of the demonstrations may differ simply due to sampling and model errors and inconsistencies. These demonstrations can be noisy and may not be representative of the expert's true policy. As a result, one must be careful in solving the primal IL formulation to make it tractable.
+There are several reasons for why the expert demonstration data may not be sampled according to the true occupancy frequency. First, the expert's initial state distribution may differ from the initial state distribution when the learned policy is deployed. Second, the expert may focus on providing pedagogic demonstrations that focus on the most challenging parts of the state space~\cite{cakmak2012algorithmic,hadfield2016cooperative,Brown2018b}. Third, the demonstrations may not even form a trajectory but instead consist of disconnected state-action pairs. Finally, the state distribution of the demonstrations may differ simply due to sampling and model errors and inconsistencies. These demonstrations can be noisy and may not be representative of the expert's true policy. As a result, one must be careful in solving the primal IL formulation to make it tractable.
 
 To better illustrate the importance of covariate shift, consider the following extreme example. In an MDP with a small state space and the ability to jump between states, the expert provides a single demonstration for each state showing the optimal actions. Behavior cloning algorithms, which reduce imitation learning to a classification problem, will recover the optimal policy given that the classification bias is general enough. Yet, most common IRL algorithms based on the same scheme as LPAL~\cite{Syed2008} or GAIL~\cite{Ho2016} can fail to recover a good policy, as we show below. ROIL, on the other hand, recovers the optimal policy even in this extreme setting while preserving most of the benefits of the low sample complexity of IRL.
 
-ROIL builds on the same ideas as most modern IRL algorithms and can be readily integrated with the improvements developed in recent years~\cite{Arora2020}. As with most IRL algorithms, ROIL seeks to minimize the regret to the expert's policy for the worst-case plausible reward functions. However, ROIL departs significantly from existing IRL algorithms in that it does not directly use the estimate of experts's occupancy frequencies. In contrast, ROIL uses the training data to construct a robust set of plausible expert policies and minimizes the regret of the computed policy in the context of this set. As a result, ROIL cannot be seen as matching the expert's feature frequencies, which is a popular view of existing IRL techniques~\cite{abbeel2004,Syed2008,Ho2016}.
-%marek: check if this is still true \gersi{We just said this in paragraph 3}. 
+ROIL builds on the same ideas as most modern IRL algorithms and can be readily integrated with the improvements developed in recent years~\cite{arora2021survey}. As with most IRL algorithms, ROIL seeks to minimize the regret to the expert's policy for the worst-case plausible reward functions. However, ROIL departs significantly from existing IRL algorithms in that it does not directly use the estimate of expert's occupancy frequencies. In contrast, ROIL uses the training data to construct a robust set of plausible expert policies and minimizes the regret of the computed policy in the context of this set. As a result, ROIL cannot be seen as matching the expert's feature frequencies, which is a popular view of existing IRL techniques~\cite{abbeel2004,Syed2008,Ho2016}.
 
-The remainder of the paper is organized as follows. \Cref{sec:preliminaries} describes the background in MDPs and IRL necessary to introduce ROIL. Then, in \cref{sec:optimization-formulation}, we describe our general framework, analyze its basic properties, and propose an optimization algorithm. \Cref{sec:covar-shift-bounds} generalizes the approach to allow for custom bounds on the errors in covariate shift. This extension also helps to make a connection with existing IRL methods. Finally, in \cref{sec:experimental-results}, we analyze ROIL numerically and compare it with relevant algorithms. 
+
+The remainder of the paper is organized as follows. \Cref{sec:preliminaries} describes the background in MDPs and IRL necessary to introduce ROIL. Then, in \cref{sec:optimization-formulation}, we describe our general framework, analyze its basic properties, propose an optimization algorithm, and show its equivalence to a Chebyshev center problem. \Cref{sec:theoretical-analysis} discusses the theoretical properties of our formulation and that highlight its strength and limitations in comparison with prior work. Finally, in \cref{sec:experimental-results}, we analyze ROIL numerically and compare it with relevant algorithms. 
 
 \section{Preliminaries}\label{sec:preliminaries}
 
-Before describing the underlying MDP framework~\cite{Puterman1994} and formally define the IRL problem~\cite{abbeel2004,Syed2008,Ho2016}, we define the basic notation we use in the paper. We use calligraphic letters to denote sets and a tilde to denote random variables. We also adopt the standard convention that $\mathcal{A}^{\mathcal{B}}$ represents the set of all functions from a set $\mathcal{B}$ to a set $\mathcal{A}$. Finally, the sets $\Real$ and $\Real_+$ represent real and non-negative numbers respectively. 
+Before describing the underlying MDP framework~\cite{Puterman1994} and formally defining the IRL problem~\cite{abbeel2004,Syed2008,Ho2016}, we define the basic notation we use in the paper. We use calligraphic letters to denote sets and a tilde to denote random variables. We also adopt the standard convention that $\mathcal{A}^{\mathcal{B}}$ represents the set of all functions from a set $\mathcal{B}$ to a set $\mathcal{A}$ and treat vectors as function from indexes to real numbers. Finally, the sets $\Real$ and $\Real_+$ represent real and non-negative numbers respectively. 
 
 
 %This introduction is not meant to be exhaustive, but rather to provide the reader with the necessary background to understand the rest of the paper.
@@ -106,47 +104,50 @@ Before describing the underlying MDP framework~\cite{Puterman1994} and formally 
 
 % \paragraph{Markov Decision Processes}
 
-As is usual in IRL literature, we assume that the domain can be modeled as a \emph{Markov Decision Process} with a finite number of states $\mathcal{S} = \left\{ 1, \dots , S \right\}$ and a finite number of actions $\mathcal{A} = \left\{ 1, \dots , A \right\}$. The transition probability function $p\colon \mathcal{S} \times \mathcal{A} \to \Delta^{\mathcal{S}}$, where $\Delta^{\mathcal{S}} = \left\{ x\in \Real_{+}^S \mid \sum_{s\in \mathcal{S}} x_s =1 \right\}$ is the probability simplex over the elements of the set $\mathcal{S}$. The reward function $r\opt \colon \mathcal{S} \times \mathcal{A} \to \Real$ represents the reward obtained in each transition. The initial distribution over states is denoted by $p_0\in \Delta^S$. 
+We assume that the domain can be modeled as a \emph{Markov Decision Process} with a finite number of states $\mathcal{S} = \left\{ 1, \dots , S \right\}$ and a finite number of actions $\mathcal{A} = \left\{ 1, \dots , A \right\}$. The transition probability function $p\colon \mathcal{S} \times \mathcal{A} \to \Delta^{\mathcal{S}}$, where $\Delta^{\mathcal{S}} = \left\{ x\in \Real_{+}^S \mid \sum_{s\in \mathcal{S}} x_s =1 \right\}$ is the probability simplex over the elements of the set $\mathcal{S}$. The reward function $r\opt \colon \mathcal{S} \times \mathcal{A} \to \Real$ represents the reward obtained in each transition. The initial distribution over states is denoted by $p_0\in \Delta^S$. 
 
 A solution to an MDP is a \emph{policy}. In this work, we restrict our attention to \emph{stationary randomized} and \emph{deterministic} policies. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_{\mathrm{R}} = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. Note that randomized policies are a special case of deterministic policies. 
 
-We assume the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$. The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_{\mathrm{R}} = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_{\mathrm{R}} \cup \Pi_D$.
+%We consider the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. The infinite-horizon discounted return of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by $\rho(\pi, r)$. 
+
+%The set of deterministic policies is $\Pi_D= \mathcal{A}^{\mathcal{S}}$ and the set of randomized policies is $\Pi_{\mathrm{R}} = {\left(\Delta^{\mathcal{A}}\right)}^{\mathcal{S}}$. The set of all policies is $\Pi = \Pi_{\mathrm{R}} \cup \Pi_D$.
 
 The objective in this work is the $\gamma$-discounted infinite horizon objective with $\gamma \in [0,1)$. We denote the  infinite-horizon discounted \emph{return} of a policy $\pi \in \Pi$ and a reward $r \in \mathcal{R}$ is denoted by 
 \[
   \rho(\pi, r)
   \;=\; \lim_{T\to\infty} \mathbb{E}^{\pi, p_0} \left[   \sum_{t=0}^{T} \gamma^t r(\tilde{s}_t,\tilde{a}_t)) \right], 
 \]
-where the subscript on the expectation indicates that $\tilde{s}_0 \sim p_0$ and $\tilde{s}_{t+1} \sim p(\tilde{s}_t,\tilde{a}_t, \cdot)$, and $\tilde{a}_t \sim \pi(\tilde{s}_t, \cdot )$.  The return $\rho$ is parametrized by the reward because in the IRL setting, the reward is uncertain. 
+where the superscript on the expectation indicates that $\tilde{s}_0 \sim p_0$ and $\tilde{s}_{t+1} \sim p(\tilde{s}_t,\tilde{a}_t, \cdot)$, and $\tilde{a}_t \sim \pi(\tilde{s}_t, \cdot )$.  The return $\rho$ is parametrized by the reward because in the IRL setting, the reward is uncertain. 
 
 
-It will be convenient to treat functions that map states and actions to real numbers as vectors, such as the reward function $r\opt \in \Real^{S \times  A}$. When vectors or matrices are indexed by a state, action pair $(s,a)$; they are assumed to be indexed in an arbitrary but fixed order. We also use $P_{\pi} \in \Real_+^{S \times S}$ and $r_{\pi}\in \Real^S$  to represent the transition probability matrix and reward vector respectively for each policy $\pi\in \Pi$. Similarly, $P_a$ and $r_a$ represent the transition probablity matrix and a reward vector respectively for each action $a\in \mathcal{A}$.
+It will be convenient to treat functions that map states and actions to real numbers as vectors, such as the reward function $r\opt \in \Real^{S \times  A}$. When vectors or matrices are indexed by a state-action pair $(s,a)$. We also use $P_{\pi} \in \Real_+^{S \times S}$ and $r_{\pi}\in \Real^S$  to represent the transition probability matrix and reward vector respectively for each policy $\pi\in \Pi$. Similarly, $P_a$ and $r_a$ represent the transition probablity matrix and a reward vector respectively for each action $a\in \mathcal{A}$.
 
-An important and well-known fact that we use heavily is the relation between the occupancy frequencies and policies. In particular, for each policy $\pi\in\Pi_{\mathrm{R}}$ there exists an occupancy frequency $u_{\pi}\in \Real^{\mathcal{S}\times \mathcal{A}}$ such that $\rho(\pi, r) = u_{\pi}\tr r_{\pi}$. The space of occupancy frequencies for all $\pi\in \Pi_{\mathrm{R}}$
+An important and well-known fact that we use heavily is the relation between the occupancy frequencies and policies. In particular, for each policy $\pi\in\Pi_{\mathrm{R}}$ there exists an occupancy frequency $u^{\pi}\in \Real^{\mathcal{S}\times \mathcal{A}}$ such that $\rho(\pi, r) = r_{\pi}\tr u^{\pi}$. The space of occupancy frequencies for all $\pi\in \Pi_{\mathrm{R}}$
 is denoted as $\mathcal{U}$ and satisfies~\cite[Section~6.9]{Puterman1994}:
-\[
+\begin{equation} \label{eq:definition-u}
   \mathcal{U}
-  =
-\left\{ u_{\pi} \mid  \pi \in \Pi \right\}
-  = \Bigl\{ u\in \Real^{SA}_{+} \mid \sum_{a\in \mathcal{A}} (I - \gamma\cdot P\tr_a) u(\cdot, a) = p_0 \Bigr\}.
-\]
-Finally, for each $u\in \mathcal{U}$, one can construct a policy $\pi$ such that $u_{\pi} = u$~\cite[Theorem~6.9.1]{Puterman1994} as
+  \; =\; 
+\left\{ u^{\pi} \mid  \pi \in \Pi \right\}
+\; =\;
+\Bigl\{ u\in \Real^{SA}_{+} \mid \sum_{a\in \mathcal{A}} (I - \gamma\cdot P\tr_a) u(\cdot, a) = p_0 \Bigr\}.
+\end{equation}
+Finally, for each $u\in \mathcal{U}$, one can construct a policy $\pi_u$ such that $u^{\pi} = u$~\cite[Theorem~6.9.1]{Puterman1994} as
 \begin{equation}\label{eq:policy-construction}
-	\pi(s, a) \; =\;  \nicefrac{u(s,a)}{\sum_{a' \in \mathcal{A}} u(s,a')}, \qquad \forall s\in \mathcal{S}, a\in \mathcal{A}.
+	\pi_u(s, a) \; =\;  \frac{u(s,a)}{\sum_{a' \in \mathcal{A}} u(s,a')}, \qquad \forall s\in \mathcal{S}, a\in \mathcal{A}.
 \end{equation}
 
 
 %\paragraph{Inverse Reinforcement Learning}
 
-With the defitions above, we are now ready to describe the general IRL framework. Recall that the main goal is to learn to act in an environment without knowing the true reward function $r\opt$. Instead we have access to transition data generated from an expert's policy $\pi_{\mathrm{e}} \in \Pi_D$. To simplify the exposition, we assume that the expert follows a deterministic policy and discuss generalizations to randomized policies in \cref{sec:optimization-formulation}. The IRL algorithm has access to a dataset  \( \mathcal{D} = {(s_i, \pi_e(s_i))}_{i=1}^D \), where the states may or may not be selected sequentially from state trajectories.
+With the definitions above, we are now ready to describe the general IRL framework. Recall that the main goal is to learn to act in an environment without knowing the true reward function $r\opt$. Instead we have access to transition data generated from an expert's policy $\pi_{\mathrm{e}} \in \Pi_D$. To simplify the exposition, we assume that the expert follows a deterministic policy and discuss generalizations to randomized policies in \cref{sec:optimization-formulation}. The IRL algorithm has access to a dataset  \( \mathcal{D} = {(s_i, \pi_e(s_i))}_{i=1}^D \), where the states may or may not be selected sequentially from state trajectories.
 
-To enable a generalization from a small state set, most IRL algorithms assume a feature function $\phi\colon \mathcal{S} \times \mathcal{A}\to \Real^k$ that assigns $k$ features  to each state and action~\cite{Syed2008,Lacotte2019,chang2021mitigating}. The features $\phi$ represent characteristics of the state-action pair that can determine the reward associates with them. We can represent our features with a feature matrix $\Phi \in \Real^{SA\times k}$ where each row represents the features of a specific state and action. Linear IRL algorithms assume that rewards can be expressed as a linear combination of state and action features. Formally, the set $\mathcal{R} \subseteq \Real^{SA}$ of \emph{feasible rewards} is defined as
+To enable a generalization from a small state set, it is common in IRL algorithms to assume a feature function $\phi\colon \mathcal{S} \times \mathcal{A}\to \Real^k$ that assigns $k$ features  to each state and action~\cite{abbeel2004,Syed2008,Brown2018a,lacotte2019,chang2021mitigating,jonnavittula2021know,arora2021survey}. The features $\phi$ represent characteristics of the state-action pair that can determine the reward associates with them. We can represent our features with a feature matrix $\Phi \in \Real^{SA\times k}$ where each row represents the features of a specific state and action. Linear IRL algorithms assume that rewards can be expressed as a linear combination of state and action features. Formally, the set $\mathcal{R} \subseteq \Real^{SA}$ of \emph{feasible rewards} is defined as
 \begin{equation} \label{eq:r-defintion}
   \mathcal{R} = \left\{ \Phi w \mid  w\in \mathcal{W} \right\}, \quad
   \text{where} \quad
   \mathcal{W} = \left\{ w \in \Real^k \mid \| w \|_1 \le 1 \right\}. 
 \end{equation}
-The $L_1$ norm in the definition of $\mathcal{W}$ serves to normalize $w$ and prevent hyper-scaling of the learned parameter. Note that this restriction is important because the scale of the rewards does not affect optimal polices and thus cannot be estimated from the expert demonstrations $\mathcal{D}$ alone.
+The $L_1$ norm in the definition of $\mathcal{W}$ serves to normalize $w$ and prevent hyper-scaling of the learned parameter~\cite{abbeel2004,Syed2008}. Note that this restriction is important because the scale of the rewards does not affect optimal polices and thus cannot be estimated from the expert demonstrations $\mathcal{D}$ alone.
 
 Most IRL algorithms adopt the following scheme. The true reward $r\opt$ is unknown but is assumed to satisfy that $r\opt \in \mathcal{R}$. Algorithms as varied as LPAL~\cite{Syed2008}, GAIL~\cite{Ho2016}, and MILO~\cite{chang2021mitigating} seek to compute a policy that minimizes the worst-case regret with respect the expert's policy. In its essence the regret minimization problem is usually formalized as
 \begin{equation} \label{eq:IRL_formulation}
@@ -154,7 +155,7 @@ Most IRL algorithms adopt the following scheme. The true reward $r\opt$ is unkno
 \end{equation}
 Here, $\hat{\pi}_{\mathrm{e}}$ is an estimate of the expert policy $\pi_{\mathrm{e}}$ constructed from the dataset $\mathcal{D}$.
 
-The conceptual optimization in \eqref{eq:IRL_formulation} is impractical because it relies on the unknown $\pi_{\mathrm{e}}$ and the optimization over $\pi$ is non-convex and computationally challenging. Instead, usinng the correspondence between policies and occupancy frequencies, LPAL and related algorithms solve the following surrogate optimization problem:
+The conceptual optimization in \eqref{eq:IRL_formulation} is impractical because it relies on the unknown $\pi_{\mathrm{e}}$ and the optimization over $\pi$ is non-convex and computationally challenging. Instead, using the correspondence between policies and occupancy frequencies, LPAL and related algorithms solve the following surrogate optimization problem:
 \begin{equation} \label{eq:irl-formulation-u}
   \min_{u\in \mathcal{U}} \max_{r\in \mathcal{R}} \, \left(\hat{u}_{\mathrm{e}}\tr r - u\tr r \right)
   \; =\; 
@@ -162,9 +163,9 @@ The conceptual optimization in \eqref{eq:IRL_formulation} is impractical because
 \end{equation}
 The equality above follows from the definition of $\mathcal{R}$ in \eqref{eq:r-defintion} and from the dual norm. The choice of the norm in $\mathcal{W}$ determines the norm in \eqref{eq:irl-formulation-u}. The value $\hat{u}_{\mathrm{e}}$ represents the \emph{empirical} occupancy frequency approximating $u_{\mathrm{e}}$ and the dataset $\mathcal{D}$ is used to estimate the value $\Phi\tr \hat{u}_{\mathrm{e}}$ which is also known as the \emph{feature counts}.
 
-Modern IRL algorithms, like GAIL, usually add other regularization or penalty to the scheme in \eqref{eq:irl-formulation-u} and use $\phi$-divergence based set $\mathcal{W}$. In this work, we do not consider these extension in order to focus on the fundamental properties and tradeoffs of this formulation.
+Some IRL algorithms, like GAIL, add other regularization or penalty terms to the scheme in \eqref{eq:irl-formulation-u} and use $\phi$-divergence based set $\mathcal{W}$. In this work, we do not consider these extension in order to focus on the fundamental properties and tradeoffs of this formulation.
 
-An important limitation of the formulation in \eqref{eq:irl-formulation-u} is that it relies on estimating the expert's occupancy frequency $\hat{u}_{\mathrm{e}}$ well. The occupancy frequency represents the frequency of \emph{both} states and actions is, therefore, very sensitive to the initial distribution and covariate shifts in state distributions which may often arise in imitation learning settings. As discussed in the introduction, the expert may focus on difficult state when performing the demonstrations. In the remainder of the paper, we build on \eqref{eq:irl-formulation-u} to address its sensitivity to the initial distribution. 
+An important limitation of the formulation in \eqref{eq:irl-formulation-u} is that it relies on estimating the expert's occupancy frequency $\hat{u}_{\mathrm{e}}$ well. Because the occupancy frequency represents the frequency of \emph{both} states and actions it is very sensitive to the initial distribution and covariate shifts in state distributions which may often arise in imitation learning settings. As discussed in the introduction, the expert may focus on difficult states when performing the demonstrations. In the remainder of the paper, we build on \eqref{eq:irl-formulation-u} to address its sensitivity to the initial distribution. 
 
 %Non-sequential, in this context, means that the dataset $\mathcal{D}$ may have state, action tuples where $s_{t+1}$ is not distributed accoding to $P(\cdot | s_t, a_t)$. 
 
@@ -197,41 +198,41 @@ In this section, we describe and justify ROIL and study its computational proper
 \subsection{Basic Formulation}
 \label{sec:basic-formulation}
 
-
 Similarly to the standard IRL schema outlined in \eqref{eq:irl-formulation-u}, ROIL also adopts a principled robust optimization perspective and minimizes the worst-case regret.  The main idea is to compute a policy $\pi\in \Pi$ that minimizes regret with respect to the worst-case plausible expert's policy $\pi_{\mathrm{e}} \in \Pi_{\mathrm{R}}(\mathcal{D})$ and a reward function $r\in \mathcal{R}$: 
 \begin{equation}
 \label{eq:robust_IRL_formulation}
 \min_{\pi \in \Pi}  \max_{\pi_{\mathrm{e}} \in \Pi_{\mathrm{R}}(\mathcal{D})} \max_{r \in \mathcal{R}} \,
 \left(\rho(\pi_{\mathrm{e}}, r) - \rho(\pi, r)\right).
 \end{equation}
-Here, $ \Pi_{\mathrm{R}}(\mathcal{D})$ represents the set of all policies that are consistent with the observations in $\mathcal{D}$ and are defined as 
+Here, $ \Pi_{\mathrm{R}}(\mathcal{D}) \subseteq \Pi_{\mathrm{R}}$ represents the set of all policies consistent with $\mathcal{D}$ and are defined as 
 %
 \begin{equation} \label{eq:consistent-policies}
 \Pi_{\mathrm{R}}(\mathcal{D}) = \left\{ \pi \in \Pi_{\mathrm{R}} \mid \pi(s,a) = 1, \, \forall (s,a) \in \mathcal{D} \right\}.
 \end{equation}
-\mm{is there a reason we are using randomized policies here?}
+We include randomized policies in $\Pi_{\mathrm{R}}(\mathcal{D})$ primarily for notational convenience. Restricting the set of consistent policies to deterministic policies only would not affect the optimal solutions to \eqref{eq:robust_IRL_formulation}.
 
 If the expert demonstrations in $\mathcal{D}$ are constructed from a deterministic policy, then that policy must be contained in \eqref{eq:consistent-policies}. However, when the expert's policy is randomized, the construction in \eqref{eq:consistent-policies} may exclude the expert policy from $\Pi_{\mathrm{R}}(\mathcal{D})$. We discuss how the definition can be extended to account for randomized policies in \cref{sec:incorp-addit-constr}. 
 
+Before describing an efficient algorithm for solving ROIL in~\eqref{eq:robust_IRL_formulation}, we discuss its benefits compared with the generic IRL scheme in \eqref{eq:IRL_formulation} and~\eqref{eq:irl-formulation-u}. Recall that the estimated $\hat{u}_{\mathrm{e}}$ in~\eqref{eq:irl-formulation-u} depends on the initial state distribution which may lead to large errors when the demonstration and execution state distributions differ. Instead, ROIL uses the training data to construct the set $\Pi_{\mathrm{R}}(\mathcal{D})$---which is independent of the state distribution---and minimizes regret with respect to all consistent expert policies. 
 
-Before describing an efficient algorithm for solving ROIL in \eqref{eq:robust_IRL_formulation}, we discuss its benefits compared with the generic IRL scheme in \eqref{eq:IRL_formulation} and \eqref{eq:irl-formulation-u}. Recall that the estimated $\hat{u}_{\mathrm{e}}$ in \eqref{eq:irl-formulation-u} depends on the initial state distribution which may lead to large errors when the demonstration and execution state distributions differ. Instead, ROIL uses the training data to construct the set $\Pi_{\mathrm{R}}(\mathcal{D})$---which is independent of the state distribution---and minimizes regret with respect to all consistent expert policies. 
-
-Next, we show that the ROIL optimization problem in \eqref{eq:robust_IRL_formulation} can be reduced to a linear program with a polynomial size. It may be surprising that such a reduction is possible since ROIL's objective involves maximizing a non-concave bilinear function. We derive this reduction using occupancy-based formulation, similar to existing IRL algorithms. A key part of the formulation is a set of occupancy frequencies $\Upsilon(\mathcal{D})$ that are consistent with expert demonstrations defined for $c\in \Real^{SA}$ as 
+Next, we show that the ROIL optimization problem in~\eqref{eq:robust_IRL_formulation} can be reduced to a linear program with a polynomial size. It may be surprising that such a reduction is possible since ROIL's objective involves maximizing a non-concave bilinear function. We derive this reduction using occupancy-based formulation, similar to existing IRL algorithms. A key part of the formulation is a set of occupancy frequencies $\Upsilon$ that are consistent with expert demonstrations defined for $c\in \Real^{SA}$ as 
 %
 \begin{equation}\label{eq:consistent-occupancies}
-  \Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid c\tr u = 0  \right\},
-  \qquad
+  \Upsilon = \left\{ u \in \mathcal{U} \mid c\tr u = 0  \right\},
+  \quad
   \text{ where }
-  \qquad
+  \quad
   c(s,a) =
   \begin{cases}
-    1 &\text{if} (s,a) \notin \mathcal{D} \wedge \exists a'\in \mathcal{A}, (s, a') \in \mathcal{D} \\
+    1 &\text{if  }
+        (s,a) \notin \mathcal{D} \wedge
+        \exists a'\in \mathcal{A}, (s, a') \in \mathcal{D}, \\
     0 & \text{otherwise}.
   \end{cases}
 \end{equation}
 
-Now we illustrate the robust IRL learning problem as an optimization problem over the policy and reward space. Then we simplify it using occupancy frequencies
-and the fact that the reward function is linearly realizable by $\Phi$. This allows us in the following section to formulate the problem as a linear program.
+% Now we illustrate the robust IRL learning problem as an optimization problem over the policy and reward space. Then we simplify it using occupancy frequencies
+% and the fact that the reward function is linearly realizable by $\Phi$. This allows us in the following section to formulate the problem as a linear program.
 
 % Recall the IRL objective.
 % \begin{equation}
@@ -239,196 +240,166 @@ and the fact that the reward function is linearly realizable by $\Phi$. This all
 % \end{equation}
 
 
-
-
-
-
-We constrain occupancy frequencies to 0 only for the state-action pairs in which the state was observed, but the action was not. This constraint eliminates policies that are inconsistent with the demonstrations.
-%
-\begin{lemma}\label{prop:convexity_of_Upsilon}
-The set $\Upsilon$ is non-empty, convex, compact, and polyhedral.
-\end{lemma}
-\begin{proof}
-Since $\mathcal{U}$ is the set of feasible solutions to the dual LP formulation~\cite[Eq.~(6.9.2)]{Puterman1994} it is well known to be polyhedral and convex. To show that the set $\mathcal{U}$ is compact, we need to show that it is bounded. This is true since, $u \in \mathcal{U}$ satisfies $u \ge 0$ by construction, and it is easy to verify that $1\tr u = \frac{1}{1-\gamma}$. Then, the set $\Upsilon$ is an intersection of half-spaces with $\mathcal{U}$ a closed convex set. Any union of closed half-spaces is convex and closed~\cite[eq.~(2.2.1)]{boyd_convex_optimization}.
-\end{proof}
-
-The following lemma states the correctness of the construction of the occupancy frequencies in~\eqref{eq:consistent-occupancies}. In particular, it shows that $\Upsilon$ is exactly the set of occupancy frequencies that are consistent with the dataset. And these occupancy frequencies correspond to randomized policies that are also consistent with the dataset.
-
+The following lemma shows that the occupancy frequencies constructed in~\eqref{eq:consistent-occupancies} is exactly the set of frequencies of policies that are consistent with the dataset. 
 \begin{restatable}{lemma}{lemmaOccupancyExistance}
 \label{lemma:occ_freq_matching}
-    	Assume that $\mathcal{D}$ is the set of trajectories generated by some unknown deterministic policy $\pi_{\mathrm{e}} \in \Pi_D$. Then
+If $\mathcal{D}$ are generated by a deterministic policy $\Pi_{\mathrm{D}}$. Then
 \[
-  u \in \Upsilon(\mathcal{D})
-  \quad \Leftrightarrow \quad
-  \exists \pi \in \Pi_{\mathrm{R}}(\mathcal{D}), \, u = u^{\pi}~,
+  u \in \Upsilon
+  \qquad \Leftrightarrow \qquad
+  \left(u = u^{\pi},\;  \exists \pi \in \Pi_{\mathrm{R}}(\mathcal{D})\right).
 \]
-for each $\pi \in \Pi$ where $u^{\pi}$ is the occupancy frequency of the policy $\pi$.
 \end{restatable}
 
-Observe that given \cref{lemma:occ_freq_matching} maximizing over the policy space is equivalent to maximizing over the occupancy frequency space.
-Also note that $\rho(\pi,r) = u_{\pi}^T r$ where $u_{\pi}$ is the occupancy frequency of policy $\pi$. This allows us to simplify~\eqref{eq:robust_IRL_formulation} as follows.
+We now outline the main step in constructing a linear program formulation for solving ROIL. As \cref{lemma:occ_freq_matching} shows,  maximizing over the policy space is equivalent to maximizing over the occupancy frequency space. Then, using the fact that $\rho(\pi,r) = r\tr u^{\pi}$ and the representation of $\mathcal{R}$ in \eqref{eq:r-defintion}, we can reformulate~\eqref{eq:robust_IRL_formulation} to
 %
-\begin{equation}
-    \min_{u \in \mathcal{U}} \max_{r \in \mathcal{R}} \max_{v \in \Upsilon} v^T r - u^T r
+\begin{equation} \label{eq:roil-occupancy}
+    \min_{u \in \mathcal{U}} \max_{r \in \mathcal{R}} \max_{v \in \Upsilon} \, (v- u )\tr  r
+    \; =\; 
+    \min_{u \in \mathcal{U}} \max_{w \in \mathcal{W}} \max_{v \in \Upsilon} \, (v - u)^T \Phi w.
 \end{equation}
-
-Next observe that maximizing over $r \in \mathcal{R}$ is equivalent to maximizing over $w \in \mathcal{W}$ since we assume that $r^* = \Phi w^*$.
 %
-\begin{equation}\label{eq:primal-robust-irl}
-	\min_{u \in \mathcal{U}} \max_{w \in \mathcal{W}} \max_{v \in \Upsilon} (v - u)^T \Phi w
+
+Solving the formulation in \eqref{eq:roil-occupancy} directly is challenging because it involves maximizing a non-concave bilinear function in both $w$ and $v$. To turn this optimization to a tractable convex optimization problem, we make the following steps. The maximization over $w$ maximizes a convex function $w \mapsto \max_{v \in \Upsilon} \, (v - u)^T \Phi w$. Therefore, there exists an optimal $w$ in one of the extreme points of $\mathcal{W}$, leading to the following equivalent formulation:
+\begin{equation} \label{eq:extreme-points-reformulated}
+    \min_{u \in \mathcal{U}} \max_{w \in \ext(\mathcal{W})} \, \left(-u\tr \Phi w + \max_{v \in \Upsilon} v\tr \Phi w \right) .
 \end{equation}
+The set $\mathcal{W}$ is an $L_1$-norm ball and has a number of extreme points that is linear in the number of features.  Therefore, we can simply enumerate the extreme points in order to obtain the following linear program:
+\begin{equation} \label{eq:roil-basic-lp}
+    \begin{mprog}
+        \minimize{t \in \Real, u \in \Real^{SA}} t
+        \stc t \geq -u\tr \Phi w +  b(w),\quad \forall w \in \ext(\mathcal{W}),
+        \cs u\in \mathcal{U},
+    \end{mprog}
+  \end{equation}
+  where $b(w) = \max_{v \in \Upsilon} v\tr \Phi  w$. Note that the constraints $u\in \mathcal{U}$ defined in \eqref{eq:definition-u} are linear and $b(w)$ can be computed by solving a linear program or an MDP.
 
-
-The following theorem shows the correctness of our approach.
-
-\begin{restatable}[Consistent Regret]{thm}{chebeyshevRegret}
-\label{thrm:chebeyshevRegret}
-	Suppose that $\hat{\pi}$ has an occupancy frequency $u_{\hat{\pi}} \in \arg\min_{u \in \mathcal{U}} \ref{eq:primal-robust-irl}$.
-	Then $\hat{\pi}$ minimizes the worst-case regret with respect to the worst-case policy consistent with the demonstrations $\mathcal{D}$. That is,
-	\[
-		\max_{r\in \mathcal{R}} \max_{\pi \in \Pi_{R}(\mathcal{D})} \left(\rho(\pi, r) - \rho(\hat{\pi}, r)\right)
-		\; \le\;
-		\max_{r\in \mathcal{R}} \max_{\pi \in \Pi_{R}(\mathcal{D})} \left(\rho(\pi, r) - \rho(\pi', r)\right), \quad  \forall \pi' \in \Pi~,
-	\]
-\end{restatable}
-
-
-When we consider $\mathcal{W} = \Real_{1}$ equation~\eqref{eq:primal-robust-irl} can be simplified using the definition of the dual norm on the maximization
-over $w$. For simplicity, the definition of the dual norm is included here. For $\mathcal{W}$ bounded by some $L_p$ ball $\max_{w \in \mathcal{W}} \Phi w = \|\Phi\|_*$.
-
-\begin{equation}
-	\label{eq:robust_IRL_formulation_L1}
-	\min_{u \in \mathcal{U}} \max_{v \in \Upsilon} \|(v - u)\tr \Phi\|_*
-\end{equation}
-
-The sets $\mathcal{U}$ and $\Upsilon$ are convex from Lemma ~\ref{prop:convexity_of_Upsilon}.
-Finally, any norm on $\Real^K$ is convex~\cite{boyd_convex_optimization} (3.1.5).
-Therefore, the optimization in~\eqref{eq:robust_IRL_formulation_L1} is a convex
-optimization problem. In the convex optimization literature,
-~\eqref{eq:robust_IRL_formulation_L1} is a problem of finding the largest minimum
-distance between the edges of polytopes $\mathcal{U}$ and $\Upsilon$. Also known as the Chebyshev center of $\Upsilon$ with respect to $\mathcal{U}$.
-This problem is known to be NP-hard except for certain cases \gersi{citation needed}.
-
-Since $\mathcal{W}$ is bounded by the $L_1$ norm, its dual is the $L_\infty$ norm. The extreme points of the above
-optimization problem can be enumerated precisely as follows.
-This is done to reduce the optimization problem and improve efficiency.
-
-\begin{equation}
-	\label{eq:extreme_points_of_the_IRL_Formulation}
-	\min_{u \in \mathcal{U}} \max_{v \in \Upsilon} \max_{i \in 1:k} \max|(v - u)\tr \Phi_i|
-\end{equation}
-
-The equation in~\eqref{eq:extreme_points_of_the_IRL_Formulation} can be seen as
-finding the feature vector that points in the same SA-dimensional direction as
-the difference between our estimated occupancy frequency $u$ and the experts
-$v$. For those familiar with prior works done by Syed and Schapire~\cite{Syed2008} this is very similar to LPAL and MWAL.
-However, we show that our formulation is more general and can recover the expert exactly in particular cases.
-
+The following theorem shows the correctness of the linear program formulation.
 \begin{restatable}[ROIL LP]{thm}{roilLp}
     \label{thm:roil_lp}
-    Any optimal solution to \ref{linProg} is also optimal in \ref{eq:primal-robust-irl} 
-    \begin{equation}
-    \label{linProg}
-        \begin{mprog}
-        	\minimize{\sigma, \alpha_i, \hat{\alpha}_i \in \Real, \beta_i, \hat{\beta}_i \in \Real^{S}, u \in \Real^{SA}} \sigma
-        	\stc -u\tr \Phi_i - \beta_i\tr p_0 \leq \sigma
-        	\cs u\tr \Phi_i - \hat{\beta}_i\tr p_0 \leq \sigma
-        	\cs \Phi_i + \alpha_i c + A \beta_i \leq 0
-        	\cs -\Phi_i + \hat{\alpha}_i c + A \hat{\beta}_i \leq 0
-        	\cs i \in 1 \dots k
-        	\cs A\tr u = p_0
-        	\cs u \geq 0
-        \end{mprog}
-    \end{equation}
+Suppose that $u\opt$ is optimal in~\eqref{eq:roil-basic-lp}. Then, $\pi_{u\opt}$, as constructed in \eqref{eq:policy-construction}, is an optimal $\pi$ in~\eqref{eq:robust_IRL_formulation}.
 \end{restatable}
-
-As is often the case we have introduced 4 dual variables in out LP which have unique interpretations. These variables are $\alpha_i, \hat{\alpha}_i \in \Real$ and $\beta_i, \hat{\beta}_i \in \Real^S$. The $\alpha$ dual variables represent an importance weight of $c$ which is our constraint vector~\ref{eq:consistent-occupancies}. The $\beta$ vectors are a feature-based state value function, from this point of view the first two constraints ensure that the absolute difference between our occupancy frequency's feature expectation and that of the models is as close can be.
 
 % \paragraph{Visual Representation of ROIL}
 
 
-\begin{enumerate}
-	\item Can we show that the problem is NP hard for some choices of the set $\mathcal{R}$? \mm{Some relevant papers are:~\cite{Wu2013,Eldar2008}}
-\end{enumerate}
-
-\subsection{Incorporating Additional Constraints}
+\subsection{Extensions}
 \label{sec:incorp-addit-constr}
-In this section, we describe an extension of ROIL that allows one to control for the size of the approximation errors in the occupancy frequencies for both states and actions. We begin by expanding our definition of $\Upsilon$ to allow for more general sets.
-%
-\begin{equation}
-    \Upsilon = \{u \in \mathcal{U} \mid g_j(u) \leq 0\}
-\end{equation}
-%
-For example, one might want to model LPAL this way.
+
+One strength of ROIL is its flexibility. The basic ROIL formulation makes no assumptions except that actions in $\mathcal{D}$ are distributed according to the expert's policy. ROIL does not make any assumptions about the state distributions or the optimality of the expert's policy. In this section, we discus several simple techniques that can be used to incorporate additional assumptions about the data in $\mathcal{D}$ that help to compute less conservative solutions. 
+
+First, we discuss how to incorporate assumptions, or prior knowledge, on the distribution of the states $s$ in the demonstrations $\mathcal{D}$. This is an important assumption which can make a significant difference in a number of scenarios. With an arbitrary distribution of states in $\mathcal{D}$, missing even a single state can lead to an arbitrarily large regret. We give an example in \cref{sec:theoretical-analysis}.
+
+Suppose that the expert's demonstrations are close to being on-policy. That is, the demonstrations visit states with \emph{approximately} the same frequency as when actually following the policy when generating trajectories. Then, one can use $\mathcal{D}$ to estimate $\hat{u}_{\mathrm{e}} \approx u_{\mathrm{e}}$ and consider the set $\hat{\Upsilon}_{\epsilon}$ defined as
 %
 \begin{equation}
 \label{linf_constraint}
-	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid  
- \| (u - \hat{u_{\mathrm{e}}})\tr \Phi \| \le \eps 
- \right\}~.
+	\hat{\Upsilon}_{\epsilon} = \left\{ u \in \Upsilon \mid  
+ \| (u - \hat{u}_{\mathrm{e}})\tr \Phi \|_{\infty} \le \eps 
+ \right\}.
 \end{equation}
+This set represents all policies that are consistent with the expert's demonstrations and also have occupancy frequencies that are close to the observed expert data. The linear program in \eqref{eq:roil-basic-lp} can be easily adapted to handle the restricted set $\hat{\upsilon}_e$ by redefining $b(w) = \max_{v \in \hat{\Upsilon}_e} v\tr \Phi  w$. 
+
+It is an important question how one may be able to estimate $\epsilon$ an appropriate value for $\epsilon$ when constructing $\hat{\Upsilon}_{\epsilon}$. One option is that the value comes from additional domain information and from finite-sample bounds for estimating occupancy frequencies. Another option, which we adopt in our numerical experiments, is to estimate the value by solving
+\begin{equation}\label{eq:minimal-epsilon}
+ \epsilon \; =\;  \eta \cdot \min_{u\in \mathcal{U}}   \| (u - \hat{u}_{\mathrm{e}})\tr \Phi \|_{\infty}, 
+\end{equation}
+where $\eta \ge 1$ is some constant. In this way, $\epsilon$ is some multiple of the smallest value for which $\hat{\Upsilon}_{\epsilon}$ is non-empty. One can readily see that when $\eta = 1$, ROIL solutions will LPAL solutions as long as there is a unique solution to the minimization in \eqref{eq:minimal-epsilon}.
+
+% As is often the case we have introduced 4 dual variables in out LP which have unique interpretations. These variables are $\alpha_i, \hat{\alpha}_i \in \Real$ and $\beta_i, \hat{\beta}_i \in \Real^S$. The $\alpha$ dual variables represent an importance weight of $c$ which is our constraint vector~\ref{eq:consistent-occupancies}. The $\beta$ vectors are a feature-based state value function, from this point of view the first two constraints ensure that the absolute difference between our occupancy frequency's feature expectation and that of the models is as close can be.
+
+% To solve the inner maximization we assume that the constraints on $\Upsilon$ are linear or can be coerced into linear constraints.
 % \begin{equation}
-% 	\Upsilon(\mathcal{D}) = \left\{ u \in \mathcal{U} \mid  
-%  \| d_u - \hat{d} \| \le \epsilon_1, 
-%  \| \pi_u - \hat{\pi} \| \le \epsilon_2
-%  \right\}~.
+%     \begin{mprog}
+%         \maximize{v \in \Real^{SA}} v\tr r_i
+%         \stc A\tr v = p_0
+%         \cs v \geq 0
+%         \cs g_j(v) \leq 0
+%     \end{mprog}
 % \end{equation}
-%
-Let's try and generalize the above formulation, and lets hold off on applying the dual norm so quickly.
-%
-\begin{equation}
-\begin{aligned}
-    \label{eq:new_robust_IRL}
-    &\min_{u \in \mathcal{U}} \max_{v \in \Upsilon} \max_{r \in \mathcal{R}} v\tr r - u\tr r \\
-    &=\min_{u \in \mathcal{U}} \max_{r \in \ext(\mathcal{R})} \max_{v \in \Upsilon} v\tr r - u\tr r \\
-    &=\min_{u \in \mathcal{U}} \max_{r \in \ext(\mathcal{R})} (-u\tr r + \max_{v \in \Upsilon} v\tr r) \\
-\end{aligned}
-\end{equation}
-\begin{equation}
-    \begin{mprog}
-        \minimize{t \in \Real, u \in \Real^{SA}} t
-        \stc t \geq -u\tr r_i + \max_{v \in \Upsilon} v\tr r_i \;\; \forall r_i \in \ext(\mathcal{R})
-        \cs A\tr u = p_0
-        \cs u \geq 0
-    \end{mprog}
-\end{equation}
 
-To solve the inner maximization we assume that the constraints on $\Upsilon$ are linear or can be coerced into linear constraints.
+% Let $u_{\mathrm{R}}(\eps)$ be the minimizer of \ref{eq:new_robust_IRL} when the set $\Upsilon$ is defined as in \ref{linf_constraint}, and let $f_{\mathrm{R}}(\eps)$ be the objective value achieved by $u_{\mathrm{R}}(\eps)$.
+% Let $f_t$ be the objective value of 
+% %
+% \[\max_{r\in\mathcal{R}} r\tr (u_{\mathrm{e}} - u_r(\eps))\]
+% %
+% then 
+% %
+% \[f_t \leq f_{\mathrm{R}}(e_t)\]
+% \[f_{\mathrm{R}}(\eps_t) = \min_{u \in \Upsilon(\eps_t)} \max_{v \in \Upsilon(\eps_t)} \lvert\lvert \Phi\tr (v-u) \rvert\rvert_\infty\]
+% \[\geq \min_{\mu \in \mathcal{U}} \lvert\lvert \Phi\tr (u_{\mathrm{e}} - \mu) \rvert\rvert_\infty \geq f_t\]
 
-\begin{equation}
-    \begin{mprog}
-        \maximize{v \in \Real^{SA}} v\tr r_i
-        \stc A\tr v = p_0
-        \cs v \geq 0
-        \cs g_j(v) \leq 0
-    \end{mprog}
-\end{equation}
 
-Let $u_{\mathrm{R}}(\eps)$ be the minimizer of \ref{eq:new_robust_IRL} when the set $\Upsilon$ is defined as in \ref{linf_constraint}, and let $f_{\mathrm{R}}(\eps)$ be the objective value achieved by $u_{\mathrm{R}}(\eps)$.
-Let $f_t$ be the objective value of 
-%
-\[\max_{r\in\mathcal{R}} r\tr (u_{\mathrm{e}} - u_r(\eps))\]
-%
-then 
-%
-\[f_t \leq f_{\mathrm{R}}(e_t)\]
-\[f_{\mathrm{R}}(\eps_t) = \min_{u \in \Upsilon(\eps_t)} \max_{v \in \Upsilon(\eps_t)} \lvert\lvert \Phi\tr (v-u) \rvert\rvert_\infty\]
-\[\geq \min_{\mu \in \mathcal{U}} \lvert\lvert \Phi\tr (u_{\mathrm{e}} - \mu) \rvert\rvert_\infty \geq f_t\]
-%  
-\subsection{Geometric Intuition: Reduction to Chebyshev Center}
+A second possible extension that can reduce the conservativeness of ROIL is to restrict $\pi$ to $\Upsilon$. That is, we seek only policies that are consistent with the expert's demonstration. Using the Chebyshev center formulation described in \cref{sec:geom-intu-reduct}, it can be readily seen that such a restriction does not affect the relative regret attained by ROIL. With this restriction, the optimization problem in \eqref{eq:extreme-points-reformulated} becomes
+\[
+ \min_{u \in \Upsilon} \max_{w \in \ext(\mathcal{W})} \, \left(-u\tr \Phi w + \max_{v \in \Upsilon} v\tr \Phi w \right),
+\]
+which can also be solved using a linear program with only minor modifications. 
+
+
+There are many other possible extensions which can be easily incorporated into the ROIL framework. For instance, one could restrict reward functions in $\mathcal{R}$. Similar to most existing IRL frameworks, ROIL does not inherently assume that the expert demonstrations attain a close-to-optimal return. The goals is simply to outperform the expert regardless of the true reward function. However, one could restrict the set $\mathcal{R}$ only to those rewards that are consistent with the expert performing near optimally. Another way to extend ROIL is to define $\Upsilon$ to account for randomized expert demonstrations. In such formulation, the constraint $c\tr u = 0$ would need to be replaced by a constraint $u_{s,a} / \sum_{a'\in \mathcal{A}} u_{s,a'} - (\bar{\pi}_{\mathrm{e}})_{s,a} \le \epsilon, \forall s\in \mathcal{S}, a\in \mathcal{A}$ for some appropriately chosen $\epsilon$ and an estimate $\hat{\pi}_{\mathrm{e}}$ of expert's policy. Using perspective functions, one can readily see that this constraint is convex and does not increase the computational complexity of this formulation.
+
+
+
+\subsection{Discussion and Visualization}
 \label{sec:geom-intu-reduct}
 
+We now discuss a connection between ROIL and the geometric problem of computing the Chebyshev center of a convex set. This connection helps to elucidate what conditions make ROIL tractable and offer an intuitive way of visualizing ROIL and its relationship with other IRL algorithms. 
+
+In~\eqref{eq:r-defintion}, we define the set $\mathcal{W}$ in terms of an $L_1$ ball. However, this set could be defined in terms on any norm $\| \cdot \|$ as $\mathcal{W} = \left\{ w\in \Real^k \| w \| \le 1 \right\}$.  For any norm, there exists a \emph{dual norm} $\| \cdot  \|_{\star}$ defined as \( \| x\|_{\star}\; =\;  \sup_{y \neq 0} \, \nicefrac{y \tr x}{\|y\|} . \)~\cite{Horn2013}.
+The dual to an $L_p$ norm ($p \ge 1$) is an $L_q$ norm such that $\nicefrac{1}{p} + \nicefrac{1}{q} = 1$. Using the definition of a dual norm, the ROIL optimization problem in \eqref{eq:roil-occupancy} can be represented as
+\begin{equation} \label{eq:robust_IRL_formulation_L1}
+\min_{u \in \mathcal{U}} \max_{v \in \Upsilon} \, \|\Phi\tr (v - u)\|_{\star}.
+\end{equation}
+The following proposition states the correctness of this formulation. 
+\begin{restatable}[Consistent Regret]{prop}{chebeyshevRegret}
+\label{thrm:chebeyshevRegret}
+Suppose that $u\opt$ is optimal in~\eqref{eq:robust_IRL_formulation_L1} with $\| z  \|_{\star} = \| z \|_{\infty}$ for $z\in \Real^k$. Then $\pi_{u\opt}$, as constructed in \eqref{eq:policy-construction}, is an optimal $\pi$ in~\eqref{eq:robust_IRL_formulation}.
+\end{restatable}
+
+
+The optimization problem in \eqref{eq:robust_IRL_formulation_L1} has an intuitive explanation of searching for the \emph{Chebyshev center} of the set $\Upsilon$ with respect to the norm defined by $\| \cdot  \|_{\infty}$. The optimal value $u$ in this formulation is the Chebyshev center which minimizes the distance to the most distant point in the set $\Upsilon$. In other words, the Chebyshev center is the center of the smallest circumscribed $\| \cdot \|_{\infty}$ ball to the set $\Upsilon$. The problem of computing the Chebyshev center has been studied widely in the literature and numerous algorithms have been proposed~\cite{Wu2013,Eldar2008}. It is important to note that some authors use the term Chebyshev center to refer to the problem of computing the center of the largest \emph{inscribed} ball~\cite{boyd_convex_optimization} which is related but had different properties.
+
+
 \begin{figure}
-  % marek: commented out some of them to shrink space
     \centering
     %\includegraphics[width=0.45\textwidth]{../notebooks/plots/visual_U.pdf}
-    \includegraphics[width=0.35\textwidth]{../notebooks/plots/visual_U_and_Upsilon.pdf}
-    \hspace{0.1\textwidth}
+    % \includegraphics[width=0.35\textwidth]{../notebooks/plots/visual_U_and_Upsilon.pdf}
+    % \hspace{0.1\textwidth}
     \includegraphics[width=0.35\textwidth]{../notebooks/plots/visual_solve_cheb.pdf}
     %\includegraphics[width=0.35\textwidth]{../notebooks/plots/visual_solve_cheb_outside_upsilon.pdf}
-    \caption{Visual depiction of ROIL as a Chebyshev center of the set $\Upsilon$.}
+    \caption{Visual depiction of ROIL as a Chebyshev center of the set $\Upsilon$. \mm{can we move the legend out of the picture so it is not covering the content? also, we need to label the axes}}
     \label{fig:visual_representation_of_ROIL}
 \end{figure}
+
+Using the connection with Chebyshev center, \cref{fig:visual_representation_of_ROIL} visualizes ROIL. Consider a small MDP problem \mm{more details on what the problem actually is} with let $\Phi \in \Real^{n \times k}$ with two features $k = 2$. The red polygon represents the set $\Phi\tr \mathcal{U}$ with the points representing extreme points that correspond to deterministic policies. The green polygon represents the set $\Upsilon$ of policies that are consistent with the expert's demonstrations with the points representing extreme points. Note that the extreme points of $\Phi\tr \Upsilon$ are also deterministic policies in $\mathcal{U}$ but do not constitute extreme points of $\Phi\tr \mathcal{U}$.
+
+The relationship to the Chebyshev center problem also offers from additional computational insights with regard to the choice of $\mathcal{W}$. It is known that most popular choices of the distance metric $\| \cdot  \|_{\star}$ in computing the Chebyshev center of a polyhedron are NP-hard. One notable exception is when the distance metric $\| \cdot \|_{\star}$ corresponds to the $L_{\infty}$ norm. Since $L_1$ is the dual norm to the $L_{\infty}$ norm, the choice of $L_1$ in the definition of $\mathcal{W}$ is crucial to obtaining a tractable optimization problem~\cite{Wu2013,Eldar2008}. 
+
+
+% optimization problem. In the convex optimization literature,
+% ~\eqref{eq:robust_IRL_formulation_L1} is a problem of finding the largest minimum
+% distance between the edges of polytopes $\mathcal{U}$ and $\Upsilon$. Also known as the Chebyshev center of $\Upsilon$ with respect to $\mathcal{U}$.
+% This problem is known to be NP-hard except for certain cases \gersi{citation needed}.
+
+% For those familiar with prior works done by Syed and Schapire~\cite{Syed2008} this is very similar to LPAL and MWAL.
+% However, we show that our formulation is more general and can recover the expert exactly in particular cases.
+
+
+% \begin{equation}
+% \label{linProg}
+%     \begin{mprog}
+%             \minimize{\sigma, \alpha_i, \hat{\alpha}_i \in \Real, \beta_i, \hat{\beta}_i \in \Real^{S}, u \in \Real^{SA}} \sigma
+%             \stc -u\tr \Phi_i - \beta_i\tr p_0 \leq \sigma
+%             \cs u\tr \Phi_i - \hat{\beta}_i\tr p_0 \leq \sigma
+%             \cs \Phi_i + \alpha_i c + A \beta_i \leq 0
+%             \cs -\Phi_i + \hat{\alpha}_i c + A \hat{\beta}_i \leq 0
+%             \cs i \in 1 \dots k
+%             \cs A\tr u = p_0
+%             \cs u \geq 0
+%     \end{mprog}
+% \end{equation}
+
 \section{Theoretical Analysis}
 \label{sec:theoretical-analysis}
 % \mm{Things to show:
@@ -438,28 +409,76 @@ then
 % 	\end{enumerate}
 %  }
 
-Define $\mathcal{D}_S$ to be the set of all states that have been observed in the expert's trajectories:
+
+In this section, we turn to a theoretical analysis of ROIL. We study the theoretical guarantees on the quality of the solutions computed by ROIL. In particular, we show that unlike some other common IRL algorithms, ROIL is guaranteed to recover the expert's policy when demonstrations for all states are provided. We also discuss the limitations that arise from the assumption inherent in ROIL formulations and give an approximation error bound in terms of the approximation error bounds.
+
+First, we show that popular IRL algorithms, like LPAL and GAIL, suffer from a surprising weakness. The algorithms may not recover the expert's policy even when given demonstrations of deterministic actions for \emph{every} state in a tabular MDP. While this is not a scenario that occurs commonly in practice, it is nevertheless an important  This is because the methods aim to match the occupancy frequency in $\mathcal{D}$. We now give an example that demonstrates this fact and show that ROIL does not suffer from this limitation.
+
+Let $\mathcal{D}_{\mathrm{S}}$ to be the set of all states that have been observed in the expert's demonstrations:
 \[
-	\mathcal{D}_S  = \left\{ s\in \mathcal{S} \; \mid \; \exists\; a\in \mathcal{A}, \; (s,a) \in \mathcal{D} \right\}.
+\mathcal{D}_{\mathrm{S}} \; =\;  \left\{ s\in \mathcal{S} \; \mid \; \exists\; a\in \mathcal{A}, \; (s,a) \in \mathcal{D} \right\}.
 \]
+
+
+Consider an optimal occupancy frequency $u\opt_{\mathrm{e}} = \left[ \frac{\epsilon + \gamma - 1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}\right]$ which generates a dataset $\mathcal{D} = ( (s_1, a_1), (s_2, a_1) )$ which leads both LPAL and GAIL to estimate $\hat{u}_e = [\frac{1}{2(1-\gamma)}, 0, \frac{1}{2(1-\gamma)}]$. One can verify that the set of occupancy frequencies
+for this domain can be represented as a convex combination of the two deterministic policies resulting in
+\[
+  \mathcal{U} = \left\{ \xi \cdot \left[\frac{\epsilon+\gamma-1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}\right] + (1-\xi) \cdot \left[0,1-\epsilon,\frac{\gamma}{1-\gamma}+\epsilon\right] \;\mid\; \xi \in [0,1]\right\}
+\] 
+Now we show that minimizing either the GAIL or LPAL objective given the above dataset does not converge to $u^*_{\mathrm{e}}$. While by \cref{expert_recovery} ROIL is guaranteed to recover the expert.
+
+\mm{we need to give the optimization formulations of GAIL and LPAL; say that there are a lot variations}
+
+
+\begin{prop}
+ LPAL and GAIL do not recover optimal policies even if  $\mathcal{D}_\mathcal{S} = \mathcal{S}$. The policies may be arbitrarily bad.
+\end{prop}
 %
-\begin{restatable}[Expert Recovery]{prop}{expertRecovery}
+% \begin{restatable}[Expert Recovery]{prop}{expertRecovery}
+\begin{prop}
     \label{expert_recovery}
-    If $\mathcal{D}_\mathcal{S} = \mathcal{S}$ then $|\Upsilon(\mathcal{D})| = 1$
-    and $u \in \Upsilon(\mathcal{D}) \Rightarrow u = u^{\pi_{\mathrm{e}}}$.
-\end{restatable}
+    If $\mathcal{D}_\mathcal{S} = \mathcal{S}$ then $|\Upsilon| = 1$
+    and $u \in \Upsilon \Rightarrow u = u^{\pi_{\mathrm{e}}}$.
+\end{prop}
+% \end{restatable}
 %
 \begin{proof}
-	Given $\mathcal{D}_\mathcal{S} = \mathcal{S}$ then $|\Pi_{\mathrm{R}}(\mathcal{D})| = 1$
-	because there can only be one policy consistent with the demonstration
-	$\mathcal{D}$ since every state was mapped to an action by $\pi_{\mathrm{e}} \in \Pi_D$
-	which generated $\mathcal{D}$. Therefore, by Lemma 1, $u^\pi$ for $\pi \in
-		\Pi_{\mathrm{R}}(\mathcal{D})$ is the only occupancy frequency consistent with the
-	demonstration, and thus $|\Upsilon(\mathcal{D})| = 1$. By the above
-	statements, $u \in \Upsilon(\mathcal{D}) \Rightarrow u = u^{\pi_{\mathrm{e}}}$.
+Given $\mathcal{D}_\mathcal{S} = \mathcal{S}$ then $|\Pi_{\mathrm{R}}(\mathcal{D})| = 1$ because there can only be one policy consistent with the demonstration $\mathcal{D}$ since every state was mapped to an action by $\pi_{\mathrm{e}} \in \Pi_D$ which generated $\mathcal{D}$. Therefore, by Lemma 1, $u_{\pi}$ for $\pi \in \Pi_{\mathrm{R}}(\mathcal{D})$ is the only occupancy frequency consistent with the demonstration, and thus $|\Upsilon| = 1$. By the above statements, $u \in \Upsilon \Rightarrow u = u^{\pi_{\mathrm{e}}}$.
 \end{proof}
 
-% \paragraph{Limitations of ROIL}
+\Cref{expert_recovery} illustrates the main purpose of our work. The following domain shows what is possibly the greatest strength of our method.
+Consider the following deterministic MDP, where $S = \{s_1, s_2\}$, $A_{s_1} = \{a_1, a_2\}$, $A_{s_2} = \{a_1\}$, $p_0 = [1-\epsilon,\epsilon]$,
+and the choice of $\Phi$ is of no consequence:
+\begin{figure}
+  \centering
+\begin{center}
+	\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=3cm,
+			thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
+
+		\node[main node] (1) {$s_1$};
+		\node[main node] (2) [right of=1] {$s_2$};
+
+		\path[every node/.style={font=\sffamily\small}]
+		(1) edge [loop below] node {$a_1$} (1)
+		(1) edge node [below, midway] {$a_2$} (2)
+		(2) edge [loop right] node {$a_1$} (2);
+	\end{tikzpicture}
+\end{center}
+  \caption{MDP used in \cref{exm:fail-one}}
+  \label{fig:example-fail-one}
+\end{figure}
+
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/lpal_loss.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/gail_loss.pdf}
+	\caption{The loss functions of LPAL and GAIL. Here JSD refers to the Jensen-Shannon Divergence which is the loss function minimized by GAIL when the coefficient of the 
+ causal entropy term H is zero~\cite{Ho2016}.}
+	\label{fig:loss_of_LPAL_GAIL}
+\end{figure}
+
 
 \begin{example} \label{exm:roil-limitations}
 Consider the following deterministic MDP, where $S = \{s_1, s_2, s_3\}$, $A = \{a_1, a_2\}$, $p_0 = [1,0,0]$,
@@ -481,7 +500,7 @@ and $\Phi = r^* = [0,0,1,1,-1,-1]$:
     (2) edge [loop left] node {$a_1$} (2)
     (3) edge [loop right] node {$a_1$} (3);
 \end{tikzpicture}
-  \caption{An Illustration of MDP used in \cref{exm:roil-limitations}.}
+  \caption{An MDP used in \cref{exm:roil-limitations}.}
   \label{fig:roil-fail}
 \end{figure}
 
@@ -492,31 +511,6 @@ This example exposes two downsides of ROIL. Firstly, the pessimistic nature of R
 and thus its solution randomizes among the actions in the first state. Secondly, ROIL cannot take advantage the number of times that a state action pair is visited,
 and therefore what makes a dataset good for LPAL and other occupancy matching methods is not necessarily good for ROIL.
 
-% \paragraph{The Strengths of ROIL}
-
-Proposition~\ref{expert_recovery} illustrates the main purpose of our work. The following domain shows what is possibly the greatest strength of our method.
-Consider the following deterministic MDP, where $S = \{s_1, s_2\}$, $A_{s_1} = \{a_1, a_2\}$, $A_{s_2} = \{a_1\}$, $p_0 = [1-\epsilon,\epsilon]$,
-and the choice of $\Phi$ is of no consequence:
-\begin{center}
-	\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=3cm,
-			thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
-
-		\node[main node] (1) {$s_1$};
-		\node[main node] (2) [right of=1] {$s_2$};
-
-		\path[every node/.style={font=\sffamily\small}]
-		(1) edge [loop below] node {$a_1$} (1)
-		(1) edge node [below, midway] {$a_2$} (2)
-		(2) edge [loop right] node {$a_1$} (2);
-	\end{tikzpicture}
-\end{center}
-
-Consider an optimal occupancy frequency $u\opt_{\mathrm{e}} = \left[ \frac{\epsilon + \gamma - 1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}\right]$ which generates a dataset $\mathcal{D} = ( (s_1, a_1), (s_2, a_1) )$ which leads both LPAL and GAIL to estimate $\hat{u}_e = [\frac{1}{2(1-\gamma)}, 0, \frac{1}{2(1-\gamma)}]$. One can verify that the set of occupancy frequencies
-for this domain can be represented as a convex combination of the two deterministic policies resulting in
-\[
-  \mathcal{U} = \left\{ \xi \cdot \left[\frac{\epsilon+\gamma-1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}\right] + (1-\xi) \cdot \left[0,1-\epsilon,\frac{\gamma}{1-\gamma}+\epsilon\right] \;\mid\; \xi \in [0,1]\right\}
-\] 
-Now we show that minimizing either the GAIL or LPAL objective given the above dataset does not converge to $u^*_{\mathrm{e}}$. While by Proposition~\ref{expert_recovery} ROIL is guaranteed to recover the expert.
 
 \begin{restatable}[Regret Bounds]{thm}{roilRegretBound}
 \label{roilRegretBound}
@@ -528,16 +522,6 @@ where $\eps_t = \lvert\lvert \Phi\tr (\hat{u}_{\mathrm{e}} - u_{\mathrm{e}}) \rv
     \[\leq \lvert\lvert \Phi\tr (u_{\mathrm{e}}-\hat{u_e}) \rvert\rvert_\infty + \lvert\lvert \Phi\tr (\hat{u_e} - u_{\mathrm{R}}(\eps)) \rvert\rvert_\infty\]
     \[\leq \eps_t + \eps\]
   \end{proof}
-
-
-\begin{figure}
-	\centering
-	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/lpal_loss.pdf}
-	\includegraphics[width=0.45\textwidth]{../src/plots/all_state/gail_loss.pdf}
-	\caption{The loss functions of LPAL and GAIL. Here JSD refers to the Jensen-Shannon Divergence which is the loss function minimized by GAIL when the coefficient of the 
- causal entropy term H is zero~\cite{Ho2016}.}
-	\label{fig:loss_of_LPAL_GAIL}
-\end{figure}
 
 
 \section{Experimental Results}
@@ -576,7 +560,7 @@ To simulate off-policy data we choose a behavior policy $\pi_b$ to be the unifor
 Figures \ref{fig:20x20_results} and \ref{fig:40x40_results} show the results of ROIL across many dataset sizes and include comparisons to other methods. As was our goal, ROIL performs well when
 there is covariate shift present in the dataset. While other methods continue to converge to $\pi_b$, ROIL converges to the optimal. In the on-policy case, when $\pi_{\mathrm{e}}$ controls both the transition dynamics and generates the actions for the dataset, we see that ROIL does not converge as quickly as other methods that rely on and trust the accuracy of $\hat{u_e}$. As is often the case, we pay for the robustness of our approach when it is not needed \cite{}.
 
-ADD WHY BC DOES WELL AND GAIL SO POORLY
+\gersi{Add why NBC does so well and GAIL so poorly}
 
 \section{Conclusion}
 % \begin{enumerate}
@@ -592,30 +576,41 @@ In future works, we hope to study other methods for robustness in IL as well as 
 %\bibliographystyle{plain}
 \bibliography{irl.bib}
 
-\section{Appendix}
+
+\appendix
+\section{Proofs of \cref{sec:basic-formulation}}
+
+We constrain occupancy frequencies to 0 only for the state-action pairs in which the state was observed, but the action was not. This constraint eliminates policies that are inconsistent with the demonstrations.
+%
+\begin{lem}\label{prop:convexity_of_Upsilon}
+The set $\Upsilon$ is non-empty, convex, compact, and polyhedral.
+\end{lem}
+\begin{proof}
+Since $\mathcal{U}$ is the set of feasible solutions to the dual LP formulation~\cite[Eq.~(6.9.2)]{Puterman1994} it is well known to be polyhedral and convex. To show that the set $\mathcal{U}$ is compact, we need to show that it is bounded. This is true since, $u \in \mathcal{U}$ satisfies $u \ge 0$ by construction, and it is easy to verify that $1\tr u = \frac{1}{1-\gamma}$. Then, the set $\Upsilon$ is an intersection of half-spaces with $\mathcal{U}$ a closed convex set. Any union of closed half-spaces is convex and closed~\cite[eq.~(2.2.1)]{boyd_convex_optimization}.
+\end{proof}
+
 \lemmaOccupancyExistance*
 \begin{proof}
-	To do this, we use the policy to occupancy frequency correspondence~\cite{Puterman1994}.
-	\[\forall \pi \in \Pi \,\,\,\, u^\pi(s,a) = \pi(a|s)\sum_{a'}{u^\pi(s,a')}\]
+To show this result, we use the policy to occupancy frequency correspondence~\cite{Puterman1994}.
 
-	Case 1: Prove $u \in \Upsilon (\mathcal{D})  \quad \Rightarrow \quad  \exists
-		\pi \in \Pi(\mathcal{D}), \, u = u^{\pi}$,
+Case 1: Prove $u \in \Upsilon (\mathcal{D})  \quad \Rightarrow \quad  \exists
+        \pi \in \Pi(\mathcal{D}), \, u = u^{\pi}$,
 
-	Given $u \in \Upsilon (\mathcal{D})\,\,$ constructing policy $\pi$ from
-	occupancy frequency $u$ via the policy occupancy correspondence we have.
+Given $u \in \Upsilon (\mathcal{D})\,\,$ constructing policy $\pi$ from
+occupancy frequency $u$ via the policy occupancy correspondence we have.
 
-	\[\pi(a|s) = \frac{u(s,a)}{\sum_{a`}u(s,a`)}\]
+\[\pi(a|s) = \frac{u(s,a)}{\sum_{a`}u(s,a`)}\]
 
-	Since $u \in \Upsilon (\mathcal{D})$, $u\tr c = 0$ for some $c \in \Real^{SA}$ such that
-	$c(s,a) = 1$ if $(s,\cdot) \in \mathcal{D}, (s,a) \notin \mathcal{D}$ and $c(s,a) = 0$ otherwise.
-	Therefore, for states $s$ where $(s,\cdot) \in \mathcal{D}$ we have $u(s,a) = 0$ for all $a \not= \pi_{\mathrm{e}}(s)$.
-	Only one action for that state will be non-zero, therefore for observed states we have $\pi(a|s) = 1$.
+Since $u \in \Upsilon (\mathcal{D})$, $u\tr c = 0$ for some $c \in \Real^{SA}$ such that
+$c(s,a) = 1$ if $(s,\cdot) \in \mathcal{D}, (s,a) \notin \mathcal{D}$ and $c(s,a) = 0$ otherwise.
+Therefore, for states $s$ where $(s,\cdot) \in \mathcal{D}$ we have $u(s,a) = 0$ for all $a \not= \pi_{\mathrm{e}}(s)$.
+Only one action for that state will be non-zero, therefore for observed states we have $\pi(a|s) = 1$.
 
-	Case 2: Prove $\pi \in \Pi_{\mathrm{R}}(\mathcal{D}) \quad \Rightarrow \quad  u^\pi \in
-		\Upsilon (\mathcal{D})$
+Case 2: Prove $\pi \in \Pi_{\mathrm{R}}(\mathcal{D}) \quad \Rightarrow \quad  u_{\pi} \in
+        \Upsilon (\mathcal{D})$
 
-	Given that $\pi \in \Pi_{\mathrm{R}}(\mathcal{D})$, $\pi(a|s) = 1$ for all $(s,a) \in \mathcal{D}$. Therefore, for observed states $s$, $u(s,a) = 0$ for all $a \not= \pi_{\mathrm{e}}(s)$
-	since $u(s,a) = \pi(a|s)\sum_{a'}{u^\pi(s,a')}$. Then we see that indeed for the $c$ as defined in case 1, $u\tr c = 0$.
+Given that $\pi \in \Pi_{\mathrm{R}}(\mathcal{D})$, $\pi(a|s) = 1$ for all $(s,a) \in \mathcal{D}$. Therefore, for observed states $s$, $u(s,a) = 0$ for all $a \not= \pi_{\mathrm{e}}(s)$
+since $u(s,a) = \pi(a|s)\sum_{a'}{u_{\pi}(s,a')}$. Then we see that indeed for the $c$ as defined in case 1, $u\tr c = 0$.
 \end{proof}
 
 \chebeyshevRegret*
