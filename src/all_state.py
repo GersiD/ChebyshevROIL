@@ -50,9 +50,9 @@ def generate_losses(env: MDP):
 def plot_lpal_error(env: MDP):
     xi_list, linf_error, _ = generate_losses(env)
     plt.plot(xi_list, linf_error, label="LPAL Loss")
-    plt.xlabel("Xi")
-    plt.ylabel("||u_xi - u_hat||_inf")
-    plt.title(f"LPAL Loss vs Xi")
+    plt.xlabel(r"$\xi$")
+    plt.ylabel(r"$||u_\xi - \hat{u}_e||_\infty$")
+    plt.title(f"LPAL Loss")
     # Move legend to outside of plot
     plt.legend(loc="lower right")
     plt.grid()
@@ -62,9 +62,9 @@ def plot_lpal_error(env: MDP):
 def plot_gail_error(env: MDP):
     xi_list, _, djs_list = generate_losses(env)
     plt.plot(xi_list, djs_list, label="GAIL Loss")
-    plt.xlabel("Xi")
-    plt.ylabel("JSD(u_xi - u_hat)")
-    plt.title(f"GAIL Loss vs Xi")
+    plt.xlabel(r"$\xi$")
+    plt.ylabel(r"JSD($u_\xi - \hat{u}_e$)")
+    plt.title(f"GAIL Loss")
     # Move legend to outside of plot
     plt.legend(loc="lower right")
     plt.grid()
@@ -77,12 +77,13 @@ def main():
     print(f"Opt occ freq = {env.u_E}")
     print(f"Opt value = {env.opt_return}")
     # # Set the font type to TrueType Globally
-    # plt.rcParams['pdf.fonttype'] = 42
-    # plt.rcParams['ps.fonttype'] = 42
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['ps.fonttype'] = 42
     # # set the font to be Computer Modern (cmr10 doesnt work so we use serif)
-    # plt.rcParams["font.family"] = "serif"
-    # plot_lpal_error(env)
-    # plot_gail_error(env)
+    plt.rcParams["font.family"] = "serif"
+    plt.rc('text', usetex=True)
+    plot_lpal_error(env)
+    plot_gail_error(env)
 
 if __name__ == "__main__":
     main()
