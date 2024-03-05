@@ -20,8 +20,15 @@ class Plotter(object):
 
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
-    ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC"]
+    ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC", "LPAL_LIN", "S_Cover", "Worst", "ROIL_LINF", "ROIL_LINF_LIN", "ROIL_LINF_PRUNE"]
+    rename_columns: dict[str,str]= { "ROIL_LIN":"ROILU", "ROIL_LIN_PRUNE":"ROILUP"  }
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
+    # I want to plot the state coverage as a color bar
+    # fig, ax = plt.subplots(2,1)
+    # fig.tight_layout()
+    # pos = ax[0].imshow([plotter.df["S_Cover"]], cmap="viridis", aspect="auto", alpha=1.0)
+    # fig.colorbar(pos, ax=ax[0])
+
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
     dataset_sizes.sort()
     means_across_D_size: dict[str, list[float]] = {}
@@ -35,18 +42,19 @@ def plot_returns(plotter: Plotter):
                 cis_across_D_size.setdefault(column, [])
                 cis_across_D_size[column].append(ci)
                 means_across_D_size.setdefault(column, [])
-                means_across_D_size[column].append(filtered_df[column].mean())
+                means_across_D_size[column].append(float(filtered_df[column].mean()))
     # plot the mean and confidence interval for each column
     for column in plotter.df.columns:
         if column not in ignore_columns:
             ci = cis_across_D_size[column]
             marker = markers.pop()
             plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci)
-            plt.scatter(dataset_sizes, means_across_D_size[column], label=column, marker=marker)
+            label = rename_columns.get(column, column)
+            plt.scatter(dataset_sizes, means_across_D_size[column], label=label, marker=marker)
     # Plot the optimal return and random return as a horizontal line
-    plt.axhline(y=plotter.df["Optimal"].mean(), color="black", linestyle="--", label="Optimal")
-    plt.axhline(y=plotter.df["Random"].mean(), color="black", linestyle=":", label="Random")
-
+    plt.axhline(y=float(plotter.df["Optimal"].mean()), color="black", linestyle="--", label="Optimal")
+    plt.axhline(y=float(plotter.df["Random"].mean()), color="black", linestyle=":", label="Random")
+    # plt.axhline(y=float(plotter.df["Worst"].mean()), color="red", linestyle="-.", label="Worst")
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
     plt.title(f"Expected Return vs Dataset Size : {plotter.filename}")
@@ -54,6 +62,38 @@ def plot_returns(plotter: Plotter):
     plt.legend(loc="lower right")
     plt.grid()
     plt.savefig(f"plots/returns/{plotter.filename}_returns.pdf")
+    plt.clf()
+
+def plot_regrets(plotter: Plotter):
+    """Plots the regret over different methods for each dataset size as a bar plot with stderr"""
+    ignore_columns = ["dataset_size"]
+    dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
+    dataset_sizes.sort()
+    means_across_D_size: dict[str, list[float]] = {}
+    cis_across_D_size: dict[str, list[float]] = {}
+    # compute the mean and confidence interval for each column we care about
+    for dataset_size in dataset_sizes:
+        filtered_df = plotter.df[plotter.df["dataset_size"] == dataset_size]
+        for column in plotter.df.columns:
+            if column not in ignore_columns:
+                ci = 1.96 * filtered_df[column].std() / np.sqrt(len(filtered_df))
+                cis_across_D_size.setdefault(column, [])
+                cis_across_D_size[column].append(ci)
+                means_across_D_size.setdefault(column, [])
+                means_across_D_size[column].append(float(filtered_df[column].mean()))
+    # plot the mean and confidence interval for each column
+    for column in plotter.df.columns:
+        if column not in ignore_columns:
+            ci = cis_across_D_size[column]
+            plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci)
+            plt.scatter(dataset_sizes, means_across_D_size[column], label=column)
+    plt.xlabel("Dataset Size")
+    plt.ylabel("Regret")
+    plt.title(f"Regret vs Dataset Size : {plotter.filename}")
+    # Move legend to outside of plot
+    plt.legend(loc="lower right")
+    plt.grid()
+    plt.savefig(f"plots/regrets/{plotter.filename}_regrets.pdf")
     plt.clf()
 
 def plot_epsilon_experiment(plotter: Plotter):
@@ -114,6 +154,9 @@ def main():
     # plot epsilon experiment
     # dir = "datasets/epsilon_experiment"
     # for_each_dataset(dir, plot_epsilon_experiment)
+    # plot regrets
+    # dir = "datasets/regret"
+    # for_each_dataset(dir, plot_regrets)
 
 if __name__ == "__main__":
     main()
