@@ -59,7 +59,7 @@ def plot_returns(plotter: Plotter):
     # plt.axhline(y=float(plotter.df["Worst"].mean()), color="red", linestyle="-.", label="Worst")
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
-    plt.title(f"Expected Return vs Dataset Size : {plotter.filename}")
+    # plt.title(f"Expected Return vs Dataset Size : {plotter.filename}")
     plt.ticklabel_format(style='sci', axis='x', scilimits=(3,3))
     # Move legend to outside of plot
     plt.legend(loc="lower right")
@@ -102,7 +102,7 @@ def plot_regrets(plotter: Plotter):
     plt.xlabel("Dataset Size")
     plt.ticklabel_format(style='sci', axis='x', scilimits=(3,3))
     plt.ylabel("Regret")
-    plt.title(f"Regret vs Dataset Size : {plotter.filename}")
+    # plt.title(f"Regret vs Dataset Size : {plotter.filename}")
     # Move legend to outside of plot reorder labels to go in LPAL, ROIL, GAIL, NBC, Expert, Random, Worst order
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [3, 0, 2, 1, 4, 5, 6]
@@ -161,8 +161,8 @@ def for_each_dataset(dir: str, fun: Callable):
 
 def main():
     # plot returns
-    # dir = "datasets"
-    # for_each_dataset(dir, plot_returns)
+    dir = "datasets"
+    for_each_dataset(dir, plot_returns)
     # plot return_diffs
     # for_each_dataset(dir, plot_return_diffs)
     # plot epsilon experiment
