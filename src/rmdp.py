@@ -54,7 +54,7 @@ class MDP(object):
         # phi_gail \in S X A X (SxA)
         self.phi_gail = self.compute_phi_gail()
         # Phi matrix for BC \in S x (AxK)
-        self.phi_SxAK = self.compute_phi_S_AK()
+        # self.phi_SxAK = self.compute_phi_S_AK()
 
         # Stacked (I - gamma P_a)
         self.IGammaPAStacked = self.construct_design_matrix()
@@ -67,11 +67,9 @@ class MDP(object):
         (u_rand, rand_return) = self.generate_random_policy_return()
         self.random_return = rand_return
         self.u_rand = u_rand
-        # feature expectation of an expert's policy mu_[K]
-        self.mu_E = None
-        self.weights = np.zeros(num_features)
-
-        # self.worst_return = self.solve_worst()[1]
+        u_worst, u_worst_ret = self.solve_worst()
+        self.worst_u = u_worst
+        self.worst_return = u_worst_ret
 
     def compute_phi_gail(self) -> np.ndarray:
         """Compute phi_gail which is a matrix of size S x A x (SxA)
@@ -116,8 +114,9 @@ class MDP(object):
             else:
                 if sum_u_s[s] > 1.0e-10:
                     policy[s, :] = u[s, :] / max(sum_u_s[s], 1.0e-10)
-                else: # if the sum is 0, then we have a uniform policy
-                    policy[s, 1] = 1.0
+                else: # if the sum is 0, then we set it to random
+                    rand_A_vec = np.random.rand(A)
+                    policy[s] = rand_A_vec / np.sum(rand_A_vec)
         return policy
 
     def generate_samples_from_policy(
@@ -367,6 +366,37 @@ class MDP(object):
         # assert np.sum(u_flat) - 1 / (1 - self.gamma) < 10**-2
         return u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
+    def worst_case_regret(self, D, u: np.ndarray) -> float:
+        """Computes the worst case regret of the given occupancy frequency
+        that is max pi_e max r (ro(pi_e, r) - ro(pi, r))
+        """
+        method = "Worst_Case_Regret"
+        k = self.num_features
+        W = self.IGammaPAStacked
+        w_i_mat = np.zeros((k*2, k)) # each row is an extreme point of L1 norm ball
+        for i in range(0, k):
+            w_i_mat[i][i] = 1
+            w_i_mat[i+k][i] = -1
+        # Solve inner maximization
+        max_v_r_i = np.zeros((k*2))
+        model = gp.Model("inner maximization worst_case_regret")
+        model.Params.OutputFlag = 0
+        # Define model variables
+        v = model.addMVar(shape=(self.num_states * self.num_actions), lb=0.0)
+        model.addMConstr(W.T, v, "==", self.p_0)
+        c = self.construct_constraint_vector(set(itertools.chain.from_iterable(D)))
+        model.addConstr(c @ v == 0)
+        # dont add linear constraint to worst case expert and reward
+        for i in range(0, k*2):
+            model.reset(0)
+            model.setObjective(v@self.phi@w_i_mat[i], GRB.MAXIMIZE)
+            model.optimize()
+            if model.Status != GRB.Status.OPTIMAL:
+                raise ValueError(f"{method} DID NOT FIND OPTIMAL SOLUTION")
+            max_v_r_i[i] = model.objVal
+        # compute regret
+        return np.max(max_v_r_i - u@self.phi@w_i_mat.T)
+
     def solve_cheb_part_2(self, D: List[List[Tuple[int, int]]], add_lin_constr: bool, add_linf_constr: bool, passed_eps = None, prune = False) -> Tuple[float, np.ndarray, float, float]:
         """Solves the chebyshev center problem to find the optimal occupancy_freq, this version first solves 
         an inner maximization problem, then an outer minimization problem
@@ -381,15 +411,30 @@ class MDP(object):
         D_flat = set(itertools.chain.from_iterable(D))
         c = self.construct_constraint_vector(D_flat)
         W = self.IGammaPAStacked
-        # Generate the extreme points of R
-        w_i_mat = np.zeros((k*2, k)) # each row is an extreme point of R
-        for i in range(0, k):
-            w_i_mat[i][i] = 1
-            w_i_mat[i + k][i] = -1
+        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
+        sampled_points = k*2
+        threshold = -np.inf
+        if prune:
+            sampled_points = 100
+            # Generate the sample points
+            w_i_mat = np.zeros((sampled_points, k)) # each row is a sampled point of R l1
+            for i in range(0, sampled_points):
+                w = np.random.rand(k) * 2 - 1
+                while np.linalg.norm(w, ord=1) > 1:
+                    w = np.abs(np.random.rand(k) * 2 - 1)
+                w_i_mat[i] = w / np.linalg.norm(w, ord=1)
+            threshold = np.quantile(u_e_hat @ phi @ w_i_mat.T, 0.9)
+        else:
+            w_i_mat = np.zeros((k*2, k))
+            for i in range(0, k):
+                w_i_mat[i][i] = 1
+                w_i_mat[i+k][i] = -1
+
         # solve inner maximization problem
-        max_v_r_i = np.zeros((k*2))
+        max_v_r_i = np.zeros((sampled_points))
         model = gp.Model("inner maximization")
         model.Params.OutputFlag = 0
+        model.Params.LogToConsole = 0
         # Define model variables
         v = model.addMVar(shape=(sa), lb=0.0)
         model.addMConstr(W.T, v, "==", p_0)
@@ -398,14 +443,13 @@ class MDP(object):
         # eps = 5000
         # Use the true epsilon if passsed no epsilon
         eps = passed_eps if passed_eps else (np.linalg.norm(((self.u_E).reshape((sa), order="F") - self.u_hat_all(D).reshape((sa), order="F"))@phi, ord=np.inf) + 1)
-        u_e_hat = self.u_hat_all(D).reshape((sa), order="F")
         if add_linf_constr:
             model.addConstr(v @ phi - u_e_hat @ phi <= eps)
             model.addConstr(-v @ phi + u_e_hat @ phi <= eps)
-        for i in range(0, k*2): # for each extreme point of R
+        for i in range(0, sampled_points): # for each extreme point of R
             model.reset(0)
             if prune: # prune the extreme points that dont do well with u_e_hat
-                if (u_e_hat @ phi @ w_i_mat[i]) < 0:
+                if (u_e_hat @ phi @ w_i_mat[i]) < threshold:
                     max_v_r_i[i] = -np.inf
                     continue
             model.setObjective(v@phi@w_i_mat[i], GRB.MAXIMIZE)
@@ -416,6 +460,7 @@ class MDP(object):
         # solve outer minimization problem
         model = gp.Model("outer minimization")
         model.Params.OutputFlag = 0
+        model.Params.LogToConsole = 0
         # Define model Variables
         sigma = model.addVar(lb=0.0, obj=1.0)
         u = model.addMVar(shape=(sa), lb=0.0)
@@ -428,6 +473,7 @@ class MDP(object):
             raise ValueError(f"{method} DID NOT FIND OPTIMAL SOLUTION")
         radius = model.objVal
         u_flat = u.X
+        assert(np.sum(u_flat) - (1 / (1 - self.gamma)) < 10**-2)
         return float(eps), u_flat.reshape((s, a), order="F"), radius, u_flat.T @ self.reward
 
     def compute_V_hat(self, D: List[List[Tuple[int, int]]], u_e_hat=None) -> np.ndarray:
@@ -604,7 +650,7 @@ class MDP(object):
                 ret += utheta[s,a] * self.reward_matrix[s,a]
         return ret
 
-    def solve_GAIL(self, D_e: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> float:
+    def solve_GAIL(self, D_e: List[List[Tuple[int, int]]], episodes: int, horizon: int) -> tuple[float, np.ndarray]:
         """Solve the GAIL formulation"""
         phi = self.phi_gail
         gail_features = self.num_states * self.num_actions
@@ -655,7 +701,7 @@ class MDP(object):
             theta_cur -= learning_rate * grad_theta
             # prior_obj = self.obj(theta_cur)
             # learning_rate *= 0.99
-        return self.verify_theta_return(theta_cur) # This takes a long time to compute
+        return self.verify_theta_return(theta_cur), self.u_theta_matrix(theta_cur)  # This takes a long time to compute
 
     def solve_BC(self, D_e: List[List[Tuple[int,int]]], episodes:int, horizon:int) -> float:
         phi = self.phi_SxAK
