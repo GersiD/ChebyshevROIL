@@ -1,5 +1,7 @@
 from typing import Callable
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.colors as plt_colors
 import os
 import pandas as pd
 import numpy as np
@@ -21,7 +23,7 @@ class Plotter(object):
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
     ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC", "LPAL_LIN", "S_Cover", "Worst", "ROIL_LINF", "ROIL_LINF_LIN", "ROIL_LINF_PRUNE"]
-    rename_columns: dict[str,str]= { "ROIL_LIN":"ROILU", "ROIL_LIN_PRUNE":"ROILUP"  }
+    rename_columns: dict[str,str]= { "ROIL_LIN":"ROIL", "ROIL_LIN_PRUNE":"ROIL-P"  }
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     # I want to plot the state coverage as a color bar
     # fig, ax = plt.subplots(2,1)
@@ -58,6 +60,7 @@ def plot_returns(plotter: Plotter):
     plt.xlabel("Dataset Size")
     plt.ylabel("Expected Return")
     plt.title(f"Expected Return vs Dataset Size : {plotter.filename}")
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(3,3))
     # Move legend to outside of plot
     plt.legend(loc="lower right")
     plt.grid()
@@ -66,7 +69,10 @@ def plot_returns(plotter: Plotter):
 
 def plot_regrets(plotter: Plotter):
     """Plots the regret over different methods for each dataset size as a bar plot with stderr"""
-    ignore_columns = ["dataset_size"]
+    ignore_columns = ["dataset_size", "WORST_REG", "RAND_REG"]
+    rename_columns: dict[str,str]= { "LIN_REG":"ROIL", "NBC_REG":"NBC", "GAIL_REG":"GAIL", "LPAL_REG":"LPAL", "OPT_REG":"Expert", "RAND_REG":"Random", "WORST_REG":"Worst" }
+    color_map = {"ROIL":"tab:orange", "NBC":"tab:purple", "GAIL":"tab:red", "LPAL":"tab:blue", "Expert":"tab:gray"}
+    marker_map = {"ROIL":"d", "NBC":"*", "GAIL":"h", "LPAL":"8", "Expert":"+"}
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
     dataset_sizes.sort()
     means_across_D_size: dict[str, list[float]] = {}
@@ -85,14 +91,22 @@ def plot_regrets(plotter: Plotter):
     for column in plotter.df.columns:
         if column not in ignore_columns:
             ci = cis_across_D_size[column]
-            plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci)
-            plt.scatter(dataset_sizes, means_across_D_size[column], label=column)
+            label = rename_columns.get(column, column)
+            color = color_map.get(label, "green")
+            marker = marker_map.get(label, "o")
+            plt.errorbar(dataset_sizes, means_across_D_size[column], yerr=ci, color=color)
+            plt.scatter(dataset_sizes, means_across_D_size[column], label=label, color=color, marker=marker)
+    plt.grid(visible=True)
+    plt.axhline(y=float(plotter.df["WORST_REG"].max()), color="black", linestyle="-.", label="Worst")
+    plt.axhline(y=float(plotter.df["RAND_REG"].max()), color="black", linestyle=":", label="Random")
     plt.xlabel("Dataset Size")
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(3,3))
     plt.ylabel("Regret")
     plt.title(f"Regret vs Dataset Size : {plotter.filename}")
-    # Move legend to outside of plot
-    plt.legend(loc="lower right")
-    plt.grid()
+    # Move legend to outside of plot reorder labels to go in LPAL, ROIL, GAIL, NBC, Expert, Random, Worst order
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [3, 0, 2, 1, 4, 5, 6]
+    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc="upper right")
     plt.savefig(f"plots/regrets/{plotter.filename}_regrets.pdf")
     plt.clf()
 
@@ -147,16 +161,16 @@ def for_each_dataset(dir: str, fun: Callable):
 
 def main():
     # plot returns
-    dir = "datasets"
-    for_each_dataset(dir, plot_returns)
+    # dir = "datasets"
+    # for_each_dataset(dir, plot_returns)
     # plot return_diffs
     # for_each_dataset(dir, plot_return_diffs)
     # plot epsilon experiment
     # dir = "datasets/epsilon_experiment"
     # for_each_dataset(dir, plot_epsilon_experiment)
     # plot regrets
-    # dir = "datasets/regret"
-    # for_each_dataset(dir, plot_regrets)
+    dir = "datasets/regret"
+    for_each_dataset(dir, plot_regrets)
 
 if __name__ == "__main__":
     main()
