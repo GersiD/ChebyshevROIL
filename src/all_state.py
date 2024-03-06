@@ -52,7 +52,7 @@ def plot_lpal_error(env: MDP):
     plt.plot(xi_list, linf_error, label="LPAL Loss")
     plt.xlabel(r"$\xi$")
     plt.ylabel(r"$||u_\xi - \hat{u}_e||_\infty$")
-    plt.title(f"LPAL Loss")
+    # plt.title(f"LPAL Loss")
     # Move legend to outside of plot
     plt.legend(loc="upper center")
     plt.grid()
@@ -64,7 +64,7 @@ def plot_gail_error(env: MDP):
     plt.plot(xi_list, djs_list, label="GAIL Loss")
     plt.xlabel(r"$\xi$")
     plt.ylabel(r"JSD($u_\xi - \hat{u}_e$)")
-    plt.title(f"GAIL Loss")
+    # plt.title(f"GAIL Loss")
     # Move legend to outside of plot
     plt.legend(loc="upper center")
     plt.grid()
