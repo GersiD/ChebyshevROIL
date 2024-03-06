@@ -54,7 +54,7 @@ def plot_lpal_error(env: MDP):
     plt.ylabel(r"$||u_\xi - \hat{u}_e||_\infty$")
     plt.title(f"LPAL Loss")
     # Move legend to outside of plot
-    plt.legend(loc="lower right")
+    plt.legend(loc="upper center")
     plt.grid()
     plt.savefig(f"plots/all_state/lpal_loss.pdf")
     plt.clf()
@@ -66,7 +66,7 @@ def plot_gail_error(env: MDP):
     plt.ylabel(r"JSD($u_\xi - \hat{u}_e$)")
     plt.title(f"GAIL Loss")
     # Move legend to outside of plot
-    plt.legend(loc="lower right")
+    plt.legend(loc="upper center")
     plt.grid()
     plt.savefig(f"plots/all_state/gail_loss.pdf")
     plt.clf()
@@ -81,6 +81,9 @@ def main():
     plt.rcParams['ps.fonttype'] = 42
     # # set the font to be Computer Modern (cmr10 doesnt work so we use serif)
     plt.rcParams["font.family"] = "serif"
+    # increase font size
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(6.7, 5.1))
     plt.rc('text', usetex=True)
     plot_lpal_error(env)
     plot_gail_error(env)
