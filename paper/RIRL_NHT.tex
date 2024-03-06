@@ -575,6 +575,16 @@ We evaluate two versions of ROIL: The basic ROIL makes no assumptions on $\hat{u
 
 The results are not surprising. We see that IRL methods perform very well on policy. This is unsurprising because they match the occupancy frequency, and its estimate improves with increasing samples. However, in the off-policy regime, these methods fail to work well because the estimate $\hat{u}_{\mathrm{e}}$ does not necessarily improve with increasing numbers of samples. ROIL, on the other hand, works well in both settings. We see that ROILe can adaptively choose the error $\epsilon$ that helps it perform well in both on-policy and off-policy settings. 
 
+\gersi{We should probably talk about GAIL the odd duckling that makes us look like we didn't implement it right.}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_on_policy_regret_regrets.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_off_policy_regret_regrets.pdf}
+	\caption{On and off policy regret of IRL methods on 40x40 grid world}
+	\label{fig:grid-40}
+\end{figure}
+
 \section{Conclusion}
 
 We presented a new algorithm for IRL that can handle expert demonstrations gathered for off-policy (or offline) state distributions. This is an important topic that has not received sufficient attention in prior work. We proposed ROIL, a principled and flexible framework for this problem. ROIL minimizes the regret concerning the expert's policy and makes minimal assumptions about the data and the expert. However, the framework can be easily extended to a setting in which one makes more assumptions about the expert and the demonstrations generated. 
@@ -620,6 +630,10 @@ since $c(s,a) > 0 \Rightarrow \pi(s,a) = 0 \Rightarrow u(s,a) = 0$.
 % since $u(s,a) = \pi(a|s)\sum_{a'}{u_{\pi}(s,a')}$. Then we see that indeed for the $c$ as defined in case 1, $u\tr c = 0$.
 \end{proof}
 
+\section{Experimental Results Revisited}
+
+While the performance of some methods seems about on par with what one would expect it may seem that our implementation of GAIL \cite{Ho2016}
+has some bugs. We assure the reader and refer the reader to our code \gersi{When do we link this?}.
 % \roilLp*
 % \begin{proof}
 %   The result follows from the discussion in \cref{sec:basic-formulation} and by the epigraph formulation of~\eqref{eq:extreme-points-reformulated}.
