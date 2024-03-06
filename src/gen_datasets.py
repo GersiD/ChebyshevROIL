@@ -7,6 +7,7 @@ import pandas as pd
 from rmdp import MDP
 import pickle
 import os
+import itertools
 
 """This document is an offshoot of the gridworld document for the uses of Gersi Doko"""
 """Mainly for running experiments and generating datasets (csv)"""
@@ -23,27 +24,38 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list: dict[str, float] = {}
 
     # add the returns of each u to the list
-    # _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
-    # _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
-    # returns_list["LPAL"] = lpal_ret
+    _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
+    _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
+    returns_list["LPAL"] = lpal_ret
     # returns_list["LPAL_LIN"] = lin_lpal_ret
-    # returns_list["ROIL_LIN"] = env.solve_cheb_part_2(D, True, False)[3]
-    # eps, _, _, ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
-    # returns_list["ROIL_LINF"] = ret
+    _, _, _, cheb_lin_ret = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False)
+    returns_list["ROIL_LIN"] = cheb_lin_ret
+    eps, _, _, cheb_linf_ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
+    returns_list["ROIL_LINF"] = cheb_linf_ret
     # returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)[3]
-    # returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
-    # returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
-    # returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)
+    returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
+    returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
+    returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)[0]
     # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
-    # u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
-    # returns_list["NBC"] = u_e_hat_return
+    u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
+    returns_list["NBC"] = u_e_hat_return
     # returns_list["EstLInfDiff"] = float(np.linalg.norm(env.u_E - u_e_hat, ord=np.inf))
     # returns_list["Epsilon"] = eps
-    # optimal return
-    # returns_list["Optimal"] = env.opt_return
+    # # optimal return
+    returns_list["Optimal"] = env.opt_return
     # returns_list["Worst"] = env.worst_return
     # random returns
-    # returns_list["Random"] = env.random_return
+    returns_list["Random"] = env.random_return
+    # D_flat = set(itertools.chain.from_iterable(D))
+    # returns_list["S_Cover"] = ((len(D_flat) / env.num_states) * 100)
+    # returns_list["LIN_REG"] = env.worst_case_regret(D, env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False)[1].reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["NBC_REG"] = env.worst_case_regret(D, env.solve_naive_BC(D, num_episodes, horizon)[0].reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["GAIL_REG"] = env.worst_case_regret(D, env.solve_GAIL(D, num_episodes, horizon)[1].reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["LPAL_REG"] = env.worst_case_regret(D, env.solve_syed(D, num_episodes, horizon)[0].reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["OPT_REG"] = env.worst_case_regret(D, env.u_E_flat)
+    # returns_list["RAND_REG"] = env.worst_case_regret(D, env.u_rand.reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["WORST_REG"] = env.worst_case_regret(D, env.worst_u.reshape((env.num_states*env.num_actions), order="F"))
+
     D_size = 0
     for d in D:
         D_size += len(d)
@@ -65,6 +77,16 @@ def run_one_experiment(env: MDP, num_examples: int, off_policy: bool = False) ->
         D = env.generate_samples_from_policy(num_episodes, horizon, env.opt_policy)
         return get_returns_across_methods(env, D, num_episodes, horizon)
 
+class OneExperiment:
+    """This class is soley for the pickling required by the multiprocessing pool"""
+    def __init__(self, env: MDP, num_examples: int, off_policy: bool):
+        self.env = env
+        self.num_examples = num_examples
+        self.off_policy = off_policy
+
+    def __call__(self, *args, **kwargs):
+        return run_one_experiment(self.env, self.num_examples, self.off_policy)
+
 def run_experiments_then_average(
     env: MDP, trials: int, episode_len: int, off_policy: bool) -> List[dict[str, float]]:
     runing_total: List[dict] = []
@@ -72,6 +94,9 @@ def run_experiments_then_average(
     for _ in range(0, trials):
         one_experiment_return: dict[str, float] = run_one_experiment(env, episode_len, off_policy)
         runing_total.append(one_experiment_return)
+    # closure = OneExperiment(env, episode_len, off_policy) # Currently do not have enough memory
+    # with Pool(5) as pool:
+    #     runing_total = list(pool.map(closure, range(trials)))
 
     return runing_total
 
@@ -79,24 +104,22 @@ class Experiment:
     """This class is soley for the pickling required by the multiprocessing pool
     it remembers the env for the following call to run_experiments_then_average"""
 
-    def __init__(self, env: MDP, monolith_dataset: List[List[tuple[int,int]]], off_policy: bool):
+    def __init__(self, env: MDP, off_policy: bool):
         self.env = env
         self.off_policy = off_policy
-        self.monolith_dataset = monolith_dataset
 
     def __call__(self, it: int):
-        return run_experiments_then_average(self.env, 10, it, self.off_policy)
+        return run_experiments_then_average(self.env, 5, it, self.off_policy)
 
 def generate_dataset(env: MDP, off_policy: bool, name: str):
     """Given an enviornment this function generates the csvs of the return of IRL methods asyncronusly"""
-    monolith_dataset: List[List[tuple[int, int]]]= [[]]
-    closure = Experiment(env, monolith_dataset, off_policy)
+    closure = Experiment(env, off_policy)
     returns_per_DS_size: dict[str, List[float]] = {}
     results = []
-    with Pool() as pool:
+    with Pool(10) as pool:
         results = pool.map(closure, np.linspace(100,10000,12, dtype=int))
         for resList in results:
-            print(resList)
+            # print(resList)
             for result in resList:
                 for key, value in result.items():
                     returns_per_DS_size.setdefault(key, [])
@@ -104,8 +127,8 @@ def generate_dataset(env: MDP, off_policy: bool, name: str):
     num_rows = int(np.sqrt(env.num_states))
     file_name = f"datasets/{num_rows}x{num_rows}_{name}_{'off' if off_policy else 'on'}_policy.csv"
     try: # if the file exists, append to it
-        print(f"\033[31m{file_name} already exists, opening...\033[0m")
         df = pd.read_csv(file_name)
+        print(f"\033[31m{file_name} already exists, opening...\033[0m")
         keys = list(returns_per_DS_size.keys())
         for key in keys:
             # add or replace column as long as it's not the dataset size
@@ -132,25 +155,22 @@ def generate_datasets_across_env_size(env_sizes: List[int]):
             generate_dataset(env, False, "gridworld")
 
 def main():
-    # np.random.seed(3)
-    # if you want to run one experiment
-    # exp_size = 5
-    # env = GridWorld(exp_size, 0.99)
-    # print(f"Running experiment with {exp_size}x{exp_size} gridworld!")
-    # generate_dataset(env, False)
-    
     # Check if envs have been generated before
-    sizes = [5,10,20,30,40]
+    sizes = [40]
     for size in sizes:
         try:
-            open(f"envs/{size}x{size}_gridworld_env.pkl", "rb")
+            with open(f"envs/{size}x{size}_gridworld_env.pkl", "rb") as f:
+                pass
         except FileNotFoundError:
-            env = GridWorld(size, 0.99)
+            env = GridWorld(size, 0.8)
+            print(f"\033[31m{size}x{size}_gridworld_env.pkl not found, generating...\033[0m")
             with open(f"envs/{size}x{size}_gridworld_env.pkl", "wb") as f:
                 pickle.dump(env, f)
         try:
-            open(f"envs/{size}x{size}_driving_env.pkl", "rb")
+            with open(f"envs/{size}x{size}_driving_env.pkl", "rb") as f:
+                pass
         except FileNotFoundError:
+            print(f"\033[31m{size}x{size}_driving_env.pkl not found, generating...\033[0m")
             obstacles = list(np.random.choice((size*size) - (size + 1), size, replace=False))
             env = DrivingSim(size, obstacles)
             with open(f"envs/{size}x{size}_driving_env.pkl", "wb") as f:
