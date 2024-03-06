@@ -97,7 +97,7 @@ class DrivingSim(MDP):
         2 - Did the car crash
         3 - Did the car hit the bumpers
         Also Computes Rewards which are a vector of size SA which shows the reward for each state-action pair
-        computed with a linear function of the features with weights w = [0.1, 0.1, 0.4, 0.2] which is in the L1 ball of radius 1
+        computed with a linear function of the features with weights w = [0.1, 0.1, 0.5, 0.3] which is in the L1 ball of radius 1
 
         returns phi and rewards
         """
@@ -115,7 +115,7 @@ class DrivingSim(MDP):
         for s in self.obstacles:
             phi[s, 2] = crash_penalty
         phi_SA = np.vstack([phi for _ in range(A)])
-        weights = np.array([0.1, 0.1, 0.4, 0.2])
+        weights = np.array([0.1, 0.1, 0.5, 0.3])
         return phi_SA, phi_SA @ weights
 
     def display(self):
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     (_, radius, cheb_return) = env.solve_chebyshev_center(D)
     print(f"\033[34mCheb Return    = { cheb_return }\033[0m")
     print(f"\033[34mCheb Radius    = { radius }\033[0m")
-    (eps, _, rad_2, cheb_return_2) = env.solve_cheb_part_2(D, False)
+    (eps, _, rad_2, cheb_return_2) = env.solve_cheb_part_2(D, False, True)
     print(f"\033[34mCheb Return2    = { cheb_return_2 }\033[0m")
     print(f"\033[34mCheb Radius2    = { rad_2 }\033[0m")
     (_, radius, syed_return) = env.solve_syed(D, episodes, horizon)
