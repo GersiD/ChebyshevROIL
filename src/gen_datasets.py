@@ -24,31 +24,32 @@ def get_returns_across_methods(env:MDP, D: List[List[tuple[int,int]]], num_episo
     returns_list: dict[str, float] = {}
 
     # add the returns of each u to the list
-    _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
-    _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
-    returns_list["LPAL"] = lpal_ret
+    # _, lpal_rad, lpal_ret = env.solve_syed(D, num_episodes, horizon)
+    # _, lin_lpal_rad, lin_lpal_ret = env.solve_syed(D, num_episodes, horizon, add_lin_constr=True)
+    # returns_list["LPAL"] = lpal_ret
     # returns_list["LPAL_LIN"] = lin_lpal_ret
-    _, _, _, cheb_lin_ret = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False)
-    returns_list["ROIL_LIN"] = cheb_lin_ret
-    eps, _, _, cheb_linf_ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
-    returns_list["ROIL_LINF"] = cheb_linf_ret
+    # _, _, _, cheb_lin_ret = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False)
+    # returns_list["ROIL_LIN"] = cheb_lin_ret
+    # eps, _, _, cheb_linf_ret = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)
+    # returns_list["ROIL_LINF"] = cheb_linf_ret
     # returns_list["ROIL_LINF_LIN"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad)[3]
-    returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
-    returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
-    returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)[0]
+    # returns_list["ROIL_LINF_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=False, add_linf_constr=True, passed_eps=1.5*lin_lpal_rad, prune=True)[3]
+    # returns_list["ROIL_LIN_PRUNE"] = env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[3]
+    # returns_list["GAIL"] = env.solve_GAIL(D, num_episodes, horizon)[0]
     # returns_list["BC"] = env.solve_BC(D, num_episodes, horizon)
-    u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
-    returns_list["NBC"] = u_e_hat_return
+    # u_e_hat, u_e_hat_return = env.solve_naive_BC(D, num_episodes, horizon)
+    # returns_list["NBC"] = u_e_hat_return
     # returns_list["EstLInfDiff"] = float(np.linalg.norm(env.u_E - u_e_hat, ord=np.inf))
     # returns_list["Epsilon"] = eps
     # # optimal return
-    returns_list["Optimal"] = env.opt_return
+    # returns_list["Optimal"] = env.opt_return
     # returns_list["Worst"] = env.worst_return
     # random returns
-    returns_list["Random"] = env.random_return
+    # returns_list["Random"] = env.random_return
     # D_flat = set(itertools.chain.from_iterable(D))
     # returns_list["S_Cover"] = ((len(D_flat) / env.num_states) * 100)
     # returns_list["LIN_REG"] = env.worst_case_regret(D, env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False)[1].reshape((env.num_states*env.num_actions), order="F"))
+    # returns_list["ROIL_P_REG"] = env.worst_case_regret(D, env.solve_cheb_part_2(D, add_lin_constr=True, add_linf_constr=False, prune=True)[1].reshape(env.num_states*env.num_actions, order="F"))
     # returns_list["NBC_REG"] = env.worst_case_regret(D, env.solve_naive_BC(D, num_episodes, horizon)[0].reshape((env.num_states*env.num_actions), order="F"))
     # returns_list["GAIL_REG"] = env.worst_case_regret(D, env.solve_GAIL(D, num_episodes, horizon)[1].reshape((env.num_states*env.num_actions), order="F"))
     # returns_list["LPAL_REG"] = env.worst_case_regret(D, env.solve_syed(D, num_episodes, horizon)[0].reshape((env.num_states*env.num_actions), order="F"))
@@ -156,7 +157,7 @@ def generate_datasets_across_env_size(env_sizes: List[int]):
 
 def main():
     # Check if envs have been generated before
-    sizes = [40]
+    sizes = [5,10,20,30,40]
     for size in sizes:
         try:
             with open(f"envs/{size}x{size}_gridworld_env.pkl", "rb") as f:

@@ -70,9 +70,9 @@ def plot_returns(plotter: Plotter):
 def plot_regrets(plotter: Plotter):
     """Plots the regret over different methods for each dataset size as a bar plot with stderr"""
     ignore_columns = ["dataset_size", "WORST_REG", "RAND_REG"]
-    rename_columns: dict[str,str]= { "LIN_REG":"ROIL", "NBC_REG":"NBC", "GAIL_REG":"GAIL", "LPAL_REG":"LPAL", "OPT_REG":"Expert", "RAND_REG":"Random", "WORST_REG":"Worst" }
-    color_map = {"ROIL":"tab:orange", "NBC":"tab:purple", "GAIL":"tab:red", "LPAL":"tab:blue", "Expert":"tab:gray"}
-    marker_map = {"ROIL":"d", "NBC":"*", "GAIL":"h", "LPAL":"8", "Expert":"+"}
+    rename_columns: dict[str,str]= { "LIN_REG":"ROIL", "NBC_REG":"NBC", "GAIL_REG":"GAIL", "LPAL_REG":"LPAL", "OPT_REG":"Expert", "RAND_REG":"Random", "WORST_REG":"Worst",  "ROIL_P_REG":"ROIL-P"}
+    color_map = {"ROIL":"tab:orange", "NBC":"tab:purple", "GAIL":"tab:red", "LPAL":"tab:blue", "Expert":"tab:gray", "ROIL-P":"tab:green"}
+    marker_map = {"ROIL":"d", "NBC":"*", "GAIL":"h", "LPAL":"8", "Expert":"+", "ROIL-P":"h"}
     dataset_sizes: list = list(set(plotter.df["dataset_size"])) # unique dataset sizes
     dataset_sizes.sort()
     means_across_D_size: dict[str, list[float]] = {}
@@ -103,9 +103,9 @@ def plot_regrets(plotter: Plotter):
     plt.ticklabel_format(style='sci', axis='x', scilimits=(3,3))
     plt.ylabel("Regret")
     # plt.title(f"Regret vs Dataset Size : {plotter.filename}")
-    # Move legend to outside of plot reorder labels to go in LPAL, ROIL, GAIL, NBC, Expert, Random, Worst order
+    # Move legend to outside of plot reorder labels to go in LPAL, ROIL, ROIL-P, GAIL, NBC, Expert, Random, Worst order
     handles, labels = plt.gca().get_legend_handles_labels()
-    order = [3, 0, 2, 1, 4, 5, 6]
+    order = [4,0,1,3,2,5,6,7]
     plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc="upper right")
     plt.savefig(f"plots/regrets/{plotter.filename}_regrets.pdf")
     plt.clf()
