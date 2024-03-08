@@ -332,7 +332,7 @@ This set represents all policies that are consistent with the expert's demonstra
 \| (\hat{u}_{\mathrm{e}} - u)\tr \Phi \|_{\infty}, 
 \end{equation}
 where $\eta \ge 1$ is some constant. %Another option is to choose $\epsilon$ from domain information combined with finite-sample bounds for estimating occupancy frequencies~\cite{abbeel2004}.
-The linear program in~\eqref{eq:roil-basic-lp} can be easily adapted to handle the restricted set $\hat{\upsilon}_e$ by redefining $b(w) = \max_{v \in \hat{\Upsilon}_e} v\tr \Phi  w$. 
+The linear program in~\eqref{eq:roil-basic-lp} can be easily adapted to handle the restricted set $\hat{\Upsilon}_e$ by redefining $b(w) = \max_{v \in \hat{\Upsilon}_e} v\tr \Phi  w$. 
 
 Finally, we discuss how to extend ROIL to account for randomized expert demonstrations. In such scenario, the constraint $c\tr u = 0$ must be replaced by a constraint $u_{s,a} / \sum_{a'\in \mathcal{A}} u_{s,a'} - (\bar{\pi}_{\mathrm{e}})_{s,a} \le \epsilon, \forall s\in \mathcal{S}, a\in \mathcal{A}$ for some appropriately chosen $\epsilon$ and an estimate $\hat{\pi}_{\mathrm{e}}$ of expert's policy. Using perspective functions, one can readily see that this constraint is convex and does not increase the computational complexity of this formulation.
 
@@ -501,7 +501,7 @@ thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
 In contrast with LPAL and GAIL, ROIL is guaranteed to recover the expert's policy when provided with demonstrations for all states as the following proposition states.  
 \begin{proposition} \label{expert_recovery}
 Suppose that $\left\{ s\in \mathcal{S} \; \mid \; (\cdot,s,\cdot) \in \mathcal{D} \right\} = \mathcal{S}$. Then $\pi_{\mathrm{e}}$ a unique minimizer to~\eqref{eq:roil-basic-lp}. %Moreover, with the constraint $u\in \Upsilon$ discussed in \cref{sec:incorp-addit-constr}, $u_{\mathrm{e}}$ is also the unique minimizer.
-\end{proposition} \gersi{I don't think this is right, or at least it needs a quick reword} \mm{can you elaborate?}
+\end{proposition} \gersi{I don't think this is right, or at least it needs a quick reword} \mm{can you elaborate?} \gersi{what is $\pi_e$}
 \begin{proof}
 When $\mathcal{D}$ completely covers the states, $\Pi_{\mathrm{R}}(\mathcal{D}) = \left\{ \pi_{\mathrm{e}} \right\}$ and $\Upsilon = \left\{ u_{\mathrm{e}} \right\}$ by \cref{lemma:occ_freq_matching}. One can readily see that $u_{\mathrm{e}}$ attains $0$ objective in~\eqref{eq:roil-basic-lp}, which is optimal because the regret is lower-bounded by $0$. The uniqueness is immediate because $\Upsilon$ is a singleton.
 \end{proof}
@@ -659,6 +659,22 @@ since $c(s,a) > 0 \Rightarrow \pi(s,a) = 0 \Rightarrow u(s,a) = 0$.
 	\label{fig:driving}
 \end{figure}
 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_on_policy_all_returns.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_off_policy_all_returns.pdf}
+	\caption{On (left) and off (right) policy 40x40 gridworld returns with more methods from \cref{sec:optimization-formulation}}
+	\label{fig:more_methods_gridworld}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_driving_on_policy_all_returns.pdf}
+	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_driving_off_policy_all_returns.pdf}
+	\caption{On (left) and off (right) policy 40x40 driving sim returns with more methods from \cref{sec:optimization-formulation}}
+	\label{fig:more_methods_driving}
+\end{figure}
+
 Both of our domains extend the same Python object. As a result, we focus on describing the gridworld environment and leave it to the reader to find the differences between the two, there are very few. The states of a grid world are integers from 0 to $N\times N$ where $N$ is the number of rows in the grid world, we assume we have square grid worlds where the number of columns and rows are the same. The actions an actor can take are up, down, left, and right. And the reward for a particular $(s,a)$ tuple is dictated by some reward vector $r \in \Real^{SA} = \Phi\tr w$ for some $w \in \mathcal{W}$. To solve all methods that rely on an LP, such as all ROIL variants described here, we rely on Gurobi~\cite{gurobi}.
 
 \subsection{ROIL Variants}
@@ -669,7 +685,7 @@ ROIL-P uses pruning which is a technique to reduce the number of inner maximizat
 
 For convenience, let $\psi \in \Real^d = \max_{v \in \Upsilon} v\tr\Phi w \;\; \forall w \in$ ext$(\mathcal{W})$ where $d$ is the number of inner maximizations you wish to solve, whether that be all extreme points of the L infinity norm ball or some sub-sample of a different norm ball. ROIL-P chooses $\tau$ to be the 90\% quantile of $\psi$. While it may seem ignorant to ignore some of these extreme points, it is a helpful heuristic that can help calibrate our pessimism as described in \cref{sec:optimization-formulation}. This extension as well as many others is what we find new and exciting about ROIL, however, we have too few pages to describe all such tweaks. For those interested, in \cref{fig:driving,fig:grid-40} we use 100 samples from the $\Real_{1+}$ for ROIL-P.
 
-We also implemented other variants which optimize over $\hat{\Upsilon}_\epsilon$ as in \eqref{eq:roil-improved-lp}, this led to comparable on policy performance to LPAL and ROIL-P while maintaining stable gains in expected return with new state action pairs off policy. However, due to how cluttered the graphs got, we decided to leave those as an extension and show off the two methods that were most representative of our formulation as a whole, putting the choice of robustness into the user's hands.
+We also implemented ROIL-e and ROIL-Pe which optimize over $\hat{\Upsilon}_\epsilon$ as in \cref{sec:incorp-addit-constr}, this led to comparable on policy performance to LPAL and ROIL-P while maintaining stable gains in expected return with new state action pairs off policy as seen in \cref{fig:more_methods_gridworld,fig:more_methods_driving}. However, due to how cluttered the graphs got, we decided to leave those as an extension and show off the two methods that were most representative of our formulation as a whole, putting the choice of robustness into the user's hands.
 
 \subsection{GAIL}
 
