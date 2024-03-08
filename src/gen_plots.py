@@ -23,7 +23,9 @@ class Plotter(object):
 def plot_returns(plotter: Plotter):
     """Plots the experiment returns across the dataset size for the given plotter"""
     ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC", "LPAL_LIN", "S_Cover", "Worst", "ROIL_LINF", "ROIL_LINF_LIN", "ROIL_LINF_PRUNE"]
-    rename_columns: dict[str,str]= { "ROIL_LIN":"ROIL", "ROIL_LIN_PRUNE":"ROIL-P"  }
+    if plotter.filename.split("_")[-1] == "all":
+        ignore_columns = ["dataset_size", "EstLInfDiff", "Epsilon", "Random", "Optimal", "BC", "LPAL_LIN", "S_Cover", "Worst", "ROIL_LINF_LIN"]
+    rename_columns: dict[str,str]= { "ROIL_LIN":"ROIL", "ROIL_LIN_PRUNE":"ROIL-P", "ROIL_LINF_PRUNE":r"ROIL-Pe", "ROIL_LINF":"ROIL-e"}
     markers = ["o", "v", "s", "P", "X", "D", "p", "*", "h", "H", "d", "8"]
     # I want to plot the state coverage as a color bar
     # fig, ax = plt.subplots(2,1)
@@ -161,16 +163,19 @@ def for_each_dataset(dir: str, fun: Callable):
 
 def main():
     # plot returns
-    dir = "datasets"
-    for_each_dataset(dir, plot_returns)
+    # dir = "datasets"
+    # for_each_dataset(dir, plot_returns)
     # plot return_diffs
     # for_each_dataset(dir, plot_return_diffs)
     # plot epsilon experiment
     # dir = "datasets/epsilon_experiment"
     # for_each_dataset(dir, plot_epsilon_experiment)
     # plot regrets
-    dir = "datasets/regret"
-    for_each_dataset(dir, plot_regrets)
+    # dir = "datasets/regret"
+    # for_each_dataset(dir, plot_regrets)
+    # plot all _returns
+    dir = "datasets/show_all"
+    for_each_dataset(dir, plot_returns)
 
 if __name__ == "__main__":
     main()
