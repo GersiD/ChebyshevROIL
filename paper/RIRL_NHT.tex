@@ -326,15 +326,13 @@ Then, one can use $\mathcal{D}$ to estimate $\hat{u}_{\mathrm{e}} \approx u_{\ma
 \;=\;
 \left\{ u \in \Upsilon \mid \| (\hat{u}_{\mathrm{e}} - u)\tr \Phi \|_{\infty} \le \eps \right\}.
 \end{equation}
-This set represents all policies that are consistent with the expert's demonstrations and also have occupancy frequencies that are close to the observed expert data. The linear program in~\eqref{eq:roil-basic-lp} can be easily adapted to handle the restricted set $\hat{\upsilon}_e$ by redefining $b(w) = \max_{v \in \hat{\Upsilon}_e} v\tr \Phi  w$. One can estimate $\epsilon$ by solving
+This set represents all policies that are consistent with the expert's demonstrations and also have occupancy frequencies that are close to the observed expert data. One can estimate $\epsilon$ by solving
 \begin{equation}\label{eq:minimal-epsilon}
 \epsilon \; =\;  \eta \cdot \min_{u\in \mathcal{U}}
 \| (\hat{u}_{\mathrm{e}} - u)\tr \Phi \|_{\infty}, 
 \end{equation}
 where $\eta \ge 1$ is some constant. %Another option is to choose $\epsilon$ from domain information combined with finite-sample bounds for estimating occupancy frequencies~\cite{abbeel2004}.
-
-
-\mm{TODO: we need to bring back the LINF linear program}
+The linear program in~\eqref{eq:roil-basic-lp} can be easily adapted to handle the restricted set $\hat{\upsilon}_e$ by redefining $b(w) = \max_{v \in \hat{\Upsilon}_e} v\tr \Phi  w$. 
 
 Finally, we discuss how to extend ROIL to account for randomized expert demonstrations. In such scenario, the constraint $c\tr u = 0$ must be replaced by a constraint $u_{s,a} / \sum_{a'\in \mathcal{A}} u_{s,a'} - (\bar{\pi}_{\mathrm{e}})_{s,a} \le \epsilon, \forall s\in \mathcal{S}, a\in \mathcal{A}$ for some appropriately chosen $\epsilon$ and an estimate $\hat{\pi}_{\mathrm{e}}$ of expert's policy. Using perspective functions, one can readily see that this constraint is convex and does not increase the computational complexity of this formulation.
 
@@ -475,7 +473,7 @@ Here, the first optimization problem represents LPAL~\cite{Syed2008} and the sec
 LPAL and GAIL as defined in~\eqref{eq:lpal-gail} may not recover $\pi_{\mathrm{e}}$ even when the demonstrations cover the entire state space: $ \left\{ s\in \mathcal{S} \; \mid \; \exists\; a\in \mathcal{A}, \; (s,a) \in \mathcal{D} \right\} = \mathcal{S}$. 
 \end{proposition}
 We show the proposition by constructing the following example.
-\gersi{Marek I can't figure out how to get the Figures for these examples to line up so while people are reading they can see the examples :(}\mm{that is OK. Lets floats be floats and let them float.}
+% \gersi{Marek I can't figure out how to get the Figures for these examples to line up so while people are reading they can see the examples :(}\mm{that is OK. Let floats be floats and let them float.}
 \begin{example} \label{exm:fail-all}
 Consider an MDP with two states and transition probabilities depicted in \cref{fig:example-fail-one}. Suppose that $\pi_{\mathrm{e}}(s) = a_1$ for each $s\in \mathcal{S}$.  The occupancy frequency for this policy is $u\opt_{\mathrm{e}} = \left[ \frac{\epsilon + \gamma - 1}{\epsilon(1-\gamma)}, 0, \frac{1}{\epsilon}\right]$. Assume that the dataset $\mathcal{D} = ( (s_1, a_1), (s_2, a_1) )$ represents the demonstrations; note that the state distribution needs to respect the state distribution of $u_{\mathrm{e}}$. The estimated occupancy frequency from this dataset will be $\hat{u}_{\mathrm{e}} = \left[\frac{1}{2(1-\gamma)}, 0, \frac{1}{2(1-\gamma)}\right]$ where the elements correspond to $(s_1, a_1), (s_1, a_2), (s_2,a_1)$. The set of occupancy frequencies in this MDP is
 \begin{equation} \label{eq:u-definition-example}
@@ -485,30 +483,25 @@ because the set of occupancy frequencies of randomized policies can be represent
 \end{example}
 
 \begin{figure}
-  \centering
-\begin{center}
-	\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
-			thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
-
-		\node[main node] (1) {$s_1$};
-		\node[main node] (2) [right of=1] {$s_2$};
-
-		\path[every node/.style={font=\sffamily\small}]
-		(1) edge [loop left] node {$a_1, 1-\epsilon$} (1)
-		(1) edge node [below, midway] {$a_2$} (2)
-                (1) edge node [above, midway] {$a_1, \epsilon$} (2)
-		(2) edge [loop right] node {$a_1$} (2);
-	\end{tikzpicture}
-\end{center}
-  \caption{MDP used in \cref{exm:fail-all}. The edge labels denote the actions and the corresponding transition probabilities (if less than 1).}
-  \label{fig:example-fail-one}
+\centering
+\begin{tikzpicture}[->,shorten >=1pt,auto,node distance=2cm,
+thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
+\node[main node] (1) {$s_1$};
+\node[main node] (2) [right of=1] {$s_2$};
+\path[every node/.style={font=\sffamily\small}]
+(1) edge [loop left] node {$a_1, 1-\epsilon$} (1)
+(1) edge node [below, midway] {$a_2$} (2)
+(1) edge node [above, midway] {$a_1, \epsilon$} (2)
+(2) edge [loop right] node {$a_1$} (2);
+\end{tikzpicture}
+\caption{MDP used in \cref{exm:fail-all}. The edge labels denote the actions and the corresponding transition probabilities (if less than 1).}
+\label{fig:example-fail-one}
 \end{figure}
-
 
 In contrast with LPAL and GAIL, ROIL is guaranteed to recover the expert's policy when provided with demonstrations for all states as the following proposition states.  
 \begin{proposition} \label{expert_recovery}
-Suppose that $\left\{ s\in \mathcal{S} \; \mid \; \exists\; a\in \mathcal{A}, \; (s,a) \in \mathcal{D} \right\} = \mathcal{S}$. Then $\pi_{\mathrm{e}}$ a minimizer to~\eqref{eq:roil-basic-lp}. Moreover, with the constraint $u\in \Upsilon$ discussed in \cref{sec:incorp-addit-constr}, $u_{\mathrm{e}}$ is also the unique minimizer.
-\end{proposition} \gersi{I don't think this is right, or at least it needs a quick reword}
+Suppose that $\left\{ s\in \mathcal{S} \; \mid \; (\cdot,s,\cdot) \in \mathcal{D} \right\} = \mathcal{S}$. Then $\pi_{\mathrm{e}}$ a unique minimizer to~\eqref{eq:roil-basic-lp}. %Moreover, with the constraint $u\in \Upsilon$ discussed in \cref{sec:incorp-addit-constr}, $u_{\mathrm{e}}$ is also the unique minimizer.
+\end{proposition} \gersi{I don't think this is right, or at least it needs a quick reword} \mm{can you elaborate?}
 \begin{proof}
 When $\mathcal{D}$ completely covers the states, $\Pi_{\mathrm{R}}(\mathcal{D}) = \left\{ \pi_{\mathrm{e}} \right\}$ and $\Upsilon = \left\{ u_{\mathrm{e}} \right\}$ by \cref{lemma:occ_freq_matching}. One can readily see that $u_{\mathrm{e}}$ attains $0$ objective in~\eqref{eq:roil-basic-lp}, which is optimal because the regret is lower-bounded by $0$. The uniqueness is immediate because $\Upsilon$ is a singleton.
 \end{proof}
@@ -548,31 +541,30 @@ Recall that ROIL dispenses with the assumption that the states in the demonstrat
 Consider the deterministic MDP depicted in \cref{fig:roil-fail} where $\mathcal{S} = \{s_1, s_2, s_3\}$, $\mathcal{A} = \{a_1, a_2\}$, $p_0 = [1,0,0]$, and $\Phi = r\opt = [0,0,1,1,-1,-1]$. Here, $r\opt$ is the true reward and vectors are ordered as $(s_1,a_1), (s_1, a_2), (s_2,a_1), \dots $. Assume that the expert follows the optimal policy $\pi_{\mathrm{e}}(s) = a_1, \forall s\in \mathcal{S}$ with an occupancy frequency $u_{\mathrm{e}} = [1,0,\nicefrac{\gamma}{1-\gamma},0,0,0]$. However, ROIL fails to find this solution even when demonstrations cover all but one state. Consider the dataset $\mathcal{D} = ((s_2, a_1),  \dots, (s_2, a_1))$. The optimal solution to ROIL is $u = [\nicefrac{1}{2},\nicefrac{1}{2},\nicefrac{\gamma}{2(1-\gamma)},0,\nicefrac{\gamma}{2(1-\gamma)},0]$ which is sub-optimal regardless of how well the estimated $\hat{u}_{\mathrm{e}}$ approximated $u_{\mathrm{e}}$. Using the observed data, ROIL has no evidence supporting taking actions $a_1$ or $a_2 $ in the initial state $s_1$.
 \end{example} 
 
-\Cref{exm:roil-limitations} exposes a limitation of ROIL but also hints at how to overcome them. Note that occupancy frequency matching methods, like LPAL~\cite{Syed2008}, may do well in \cref{exm:roil-limitations}. This is because LPAL will use the prevalence of the state $s_2$ in $\mathcal{D}$ to deduce that taking action $a_1$ in $s_1$ is preferable to $a_2$ because it leads to a state that is more common in the dataset. We address this limitation in \cref{sec:incorp-addit-constr}, where we discuss how one can add distributional assumptions to ROIL. The following theorem shows that with this assumption, we can prove similar approximation bounds to LPAL in the following theorem. 
-
+\Cref{exm:roil-limitations} exposes a limitation of ROIL but also hints at how to overcome them. Note that occupancy frequency matching methods, like LPAL~\cite{Syed2008}, may do well in \cref{exm:roil-limitations}. This is because LPAL will use the prevalence of the state $s_2$ in $\mathcal{D}$ to deduce that taking action $a_1$ in $s_1$ is preferable to $a_2$. As we discuss in \cref{sec:incorp-addit-constr}, it is easy to extend ROIL to benefit from similar distributional assumptions. The following theorem establishes approximation bounds for ROIL with this assumption. 
 \begin{theorem} \label{roilRegretBound}
-Suppose that $u_{\mathrm{r}}\opt$ is an optimal solution to~\eqref{eq:roil-improved-lp} with some $\epsilon>0$ such that $\hat{\Upsilon}_{\epsilon} \neq \emptyset$ and an occupancy frequency estimate $\hat{u}_{\mathrm{e}}$. Then the regret of $\pi_{\mathrm{r}}\opt  = \pi^{u\opt_{\mathrm{r}}}$ is bounded as
+Suppose that $u_{\mathrm{r}}\opt$ is an optimal solution to~\eqref{eq:roil-basic-lp} with $\Upsilon_{\epsilon}$ some $\epsilon>0$ such that $\hat{\Upsilon}_{\epsilon} \neq \emptyset$ and an occupancy frequency estimate $\hat{u}_{\mathrm{e}}$. Then the regret of $\pi_{\mathrm{r}}\opt  = \pi^{u\opt_{\mathrm{r}}}$ is bounded as
 \[
-\rho(\pi_{\mathrm{e}}, r) - \rho(\pi_{\mathrm{r}}\opt, r)
+ \rho(\pi_{\mathrm{e}}, r) - \rho(\pi_{\mathrm{r}}\opt, r)
 \;\leq\;
-\| \Phi\tr (\hat{u}_{\mathrm{e}} - u_{\mathrm{e}}) \|_\infty + \eps,
+\| (u_{\mathrm{e}} - \hat{u}_{\mathrm{e}})\tr \Phi \|_\infty + \eps,
 \qquad \forall r\in \mathcal{R}.
 \]
-Moreover, one can choose $\epsilon$ such that $ \epsilon = \| \Phi\tr (\hat{u}_{\mathrm{e}} - u_{\mathrm{e}}) \|_\infty$.
+Moreover, one can choose $\epsilon$ such that $ \epsilon = \| (u_{\mathrm{e}} - \hat{u}_{\mathrm{e}})\tr \Phi \|_\infty$.
 \end{theorem}
 \begin{proof}
-The result follows immediately by Holder's inequality, the construction of $\mathcal{W}$, and the triangle inequality as
+The result follows by Holder's inequality, the construction of $\mathcal{W}$, and the triangle inequality:
 \begin{align*}
 \rho(\pi_{\mathrm{e}}, r) - \rho(\pi_{\mathrm{r}}\opt, r)
-  &\le  \max_{r\in\mathcal{R}} r\tr(u_{\mathrm{e}} - u_{\mathrm{r}}\opt)
-    = \| \Phi\tr (u_{\mathrm{e}} - u_{\mathrm{R}}(\eps)) \|_\infty
-    \leq \| \Phi\tr (u_{\mathrm{e}} - \hat{u}_{\mathrm{e}} + \hat{u}_{\mathrm{e}} - u_{\mathrm{r}}\opt \|_\infty \\
-&\leq \| \Phi\tr (u_{\mathrm{e}}-\hat{u}_{\mathrm{e}}) \|_\infty + \| \Phi\tr (\hat{u}_{\mathrm{e}} - u_{\mathrm{R}}\opt) \|_\infty \leq  \| \Phi\tr (u_{\mathrm{e}}-\hat{u}_{\mathrm{e}}) \|_\infty + \eps.
+  &\le  \max_{r\in\mathcal{R}} (u_{\mathrm{e}} - u_{\mathrm{r}}\opt)\tr r
+    = \| (u_{\mathrm{e}} - u_{\mathrm{R}}(\eps))\tr \Phi \|_\infty
+    \leq \| (u_{\mathrm{e}} - \hat{u}_{\mathrm{e}} + \hat{u}_{\mathrm{e}} - u_{\mathrm{r}}\opt)\tr \Phi \|_\infty \\
+&\leq \| (u_{\mathrm{e}}-\hat{u}_{\mathrm{e}})\tr \Phi \|_\infty + \| (\hat{u}_{\mathrm{e}} - u_{\mathrm{R}}\opt)\tr \Phi \|_\infty \leq  \| (u_{\mathrm{e}}-\hat{u}_{\mathrm{e}})\tr \Phi \|_\infty + \eps.
 \end{align*}
 The last inequality follows from the fact that the $\pi_{\mathrm{r}}\opt  \in \Upsilon$.
 \end{proof}
 
-\Cref{roilRegretBound} practically shows that when $\| \Phi\tr (\hat{u}_{\mathrm{e}} - u_{\mathrm{e}}) \|_\infty $ is small, then ROIL with the extensions is guaranteed to find a policy that has a small regret to the expert's policy. We also note that \cref{roilRegretBound} essentially matches the error bounds derived for LPAL~\cite{Syed2008}.
+\Cref{roilRegretBound} shows that when $\| (u_{\mathrm{e}} - \hat{u}_{\mathrm{e}})\tr \Phi \|_\infty $ is small, then ROIL with the extensions is guaranteed to find a policy that has a small regret to the expert's policy. We also note that \cref{roilRegretBound} essentially matches the error bounds derived for LPAL~\cite{Syed2008}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -582,7 +574,7 @@ The last inequality follows from the fact that the $\pi_{\mathrm{r}}\opt  \in \U
 
 In this section, we study ROIL's behavior numerically on common benchmark problems. We study its performance both on-policy (states distributed according to the policy) and off-policy (states distributed arbitrarily) and compare it with closely related IRL algorithms.
 
-The first domain we use is an instance of the standard grid world problem in which each square is designated a color that represents the feature that is active for the state. The reward is some linear combination of the features for each state. That is, the matrix $\Phi$ represents the state colors and  $r\opt  = \Phi\tr w$ for some $w \in \mathcal{W}$. The features for each action in the state are identical. The agent has a choice of up, down, left, and right as their actions with small noise that takes it to a different neighboring state. The rewards in this domain are generated randomly for each run by sampling $w$ uniformly from $\mathcal{W}$. The expert policy is computed and chosen as the optimal policy for the true (unobserved) reward.
+The first domain we use is an instance of the standard grid world problem \cite{abbeel2004} in which each square is designated a color that represents the feature that is active for the state. The reward is some linear combination of the features for each state. That is, the matrix $\Phi$ represents the state colors and  $r\opt  = \Phi\tr w$ for some $w \in \mathcal{W}$. The features for each action in the state are identical. The agent has a choice of up, down, left, and right as their actions with small noise that takes it to a different neighboring state. The rewards in this domain are generated randomly for each run by sampling $w$ uniformly from $\mathcal{W}$. The expert policy is computed and chosen as the optimal policy for the true (unobserved) reward.
 
 The second domain we use is a driving simulator where the agent begins in the bottom row and can go straight up, up and to the left, or up and to the right. At the first row, the actor loops back to the bottom row to simulate a continuous environment. Similarly to the grid world, the driving simulator has some small noise in the transitions. The driving simulator has some motorists on the road, which the actor must avoid, and the left-most and right-most columns are designated as ``offroad'' where the actor receives negative rewards.
 
@@ -590,28 +582,26 @@ To generate on-policy data, we use the standard protocol in which expert demonst
 
 %This off-policy regime makes it difficult to recover the expert for any method that relies solely on $\hat{u_e}$, which is the estimated occupancy frequency given the expert dataset.
 
-We evaluate two versions of ROIL: The basic ROIL makes no assumptions on $\hat{u}_{\mathrm{e}}$ and solves~\eqref{eq:roil-basic-lp}. The extended ROIL-P solves~\eqref{eq:roil-basic-lp} while pruning away reward functions that make $\hat{u}_e$ perform sub-optimally see \cref{sec:roil_variants_appendix}. We compare these algorithms with two IRL algorithms: LPAL and GAIL. For consistency with our results, we do not impose the constraint $w \ge 0$ used in the original LPAL formulation~\cite{Syed2008}. For the GAIL implementation, we use the original formulation with $\lambda = 0$; we did not find that $\lambda$ had a significant effect on our results. We also compare it with Naive Behavioral Cloning~(NBC). NBC follows the expert's policy in states that are visited but takes random action in states that have not been visited.
+We evaluate two versions of ROIL: The basic ROIL makes no assumptions on $\hat{u}_{\mathrm{e}}$ and solves~\eqref{eq:roil-basic-lp}. ROIL-P solves~\eqref{eq:roil-prune-lp}, pruning away reward functions that make $\hat{u}_e$ perform sub-optimally see \cref{eq:roil-prune-lp}. We compare these algorithms with two IRL algorithms: LPAL and GAIL. For consistency with our results, we do not impose the constraint $w \ge 0$ used in the original LPAL formulation~\cite{Syed2008}. For the GAIL implementation, we use the original formulation with $\lambda = 0$; we did not find that $\lambda$ had a significant effect on our results. We also compare it with Naive Behavioral Cloning~(NBC). NBC follows the expert's policy in states that are visited but takes random action in states that have not been visited.
 
 \begin{figure}
-	\centering
-	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_on_policy_returns.pdf}
-	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_off_policy_returns.pdf}
-	\caption{On (left) and off (right) policy expected return of IRL methods on 40x40 grid world. (Higher is better).}
-	\label{fig:grid-40}
+\centering \includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_on_policy_returns.pdf} \includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_gridworld_off_policy_returns.pdf}
+\caption{On-policy (left) and off-policy (right) expected return of imitation learning methods on 40x40 grid world for a fixed reward. (Higher is better).}
+\label{fig:grid-40}
 \end{figure}
 
-\Cref{fig:driving,fig:grid-40} show the performance of the methods as a function of the number of samples in the demonstrations. The samples are constructed from trajectories sampled from the domain. Each data point is computed as an average of 10 seeds. The code used to generate these results is included in the appendix. We do not provide timing data because most of the algorithms are implemented in Python, and the main focus of our methods is on setting where sample complexity and not computation time are the limiting factors. 
+\Cref{fig:grid-regret,fig:grid-40} show the performance of the methods as a function of the number of samples in the demonstrations. The samples are constructed from trajectories sampled from the domain. Each data point is computed as an average of 10 seeds, and standard error bars are displayed. The code used to generate these results is included in the appendix. We do not provide timing data because most of the algorithms are implemented in Python, and the main focus of our methods is on setting where sample complexity and not computation time are the limiting factors. 
 
 We see that IRL methods perform very well on policy. This is unsurprising because they match the occupancy frequency, and its estimate improves with increasing samples. However, in the off-policy regime, these methods fail to work well because the estimate $\hat{u}_{\mathrm{e}}$ does not necessarily improve with increasing numbers of samples. ROIL, on the other hand, works well in both settings. 
 
-We see that ROIL and ROIL-P can perform well both on-policy and off-policy. ROIL is very cautious and \cref{fig:grid-regret} shows this. ROIL prefers to have its worst case under control while trading off total return. While ROIL-P prefers to have a light grasp on regret while trusting that $\hat{u}_e$ is true. When that assumption is violated it rolls back to the unique guarantees of ROIL.
+We see that ROIL and ROIL-P can perform well both on-policy and off-policy. ROIL is very cautious and \cref{fig:grid-regret} shows this. ROIL prefers to have its worst-case regret under control while trading off total return. While ROIL-P prefers to have a light grasp on regret while trusting that $\hat{u}_e$ is true. When that assumption is violated it rolls back to the unique guarantees of ROIL. While this trade-off varies for all extensions described in \cref{sec:incorp-addit-constr}, we offer the choice to the user. For return graphs of other methods please see \cref{sec:experimental_results_revisited}.
 
 \begin{figure}
-	\centering
-	\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_on_policy_regret_regrets.pdf}
-	\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_off_policy_regret_regrets.pdf}
-	\caption{On (left) and off (right) policy regret of IRL methods on 40x40 Grid World (lower is better).}
-	\label{fig:grid-regret}
+\centering 
+\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_on_policy_regret_regrets.pdf} 
+\includegraphics[width=0.45\textwidth]{../src/plots/regrets/40x40_gridworld_off_policy_regret_regrets.pdf}
+\caption{Robust regret for on-policy (left) and off-policy (right) of imitation learning methods on 40x40 Grid World (lower is better).}
+\label{fig:grid-regret}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%
@@ -660,7 +650,7 @@ since $c(s,a) > 0 \Rightarrow \pi(s,a) = 0 \Rightarrow u(s,a) = 0$.
 \end{proof}
 
 \section{Experimental Results Revisited}
-
+\label{sec:experimental_results_revisited}
 \begin{figure}
 	\centering
 	\includegraphics[width=0.45\textwidth]{../src/plots/returns/40x40_driving_on_policy_returns.pdf}
