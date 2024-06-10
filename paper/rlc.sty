@@ -1,12 +1,12 @@
-% RLC rlc.sty Version 2024.1
+% RLC rlc.sty Version 2024.2
 
 %%%% Adapted by Philip Thomas and Glen Berseth from the TMLR style file that was
 %%%% adapted by Hugo Larochelle and Fabian Pedregosa from the 
 %%%% ICLR stylefile Macros and borrowing from the JMLR Macros
 %%%% Style File
 
-%%%% Last edited, December 2023 by Philip Thomas
-%%%%      Tweaks to margins and title formatting.
+%%%% Last edited, March 2024 by Philip Thomas
+%%%%      Change to header and page numbers for accepted format.
 
 % Change the overall width of the page.  If these parameters are
 %       changed, they will require corresponding changes in the
@@ -113,7 +113,8 @@
     \if@preprint
         \lhead{}
     \else
-        \lhead{Reinforcement Learning Conference (August 2024)}
+        \lhead{RLJ $\vert$ RLC 2024}
+        \fancyfoot{} % Remove page numbers.
     \fi
 \else
        \lhead{Under review for the Reinforcement Learning Conference (RLC)}
