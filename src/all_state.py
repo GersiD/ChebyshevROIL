@@ -22,7 +22,7 @@ class TwoState(MDP):
                 assert(sum(P[s, :, a]) - 1 < 1e-10)
         phi = np.zeros((num_states*num_actions, num_features))
         p_0 = np.array([0.9,0.1])
-        gamma = 0.99
+        gamma = 0.8
         reward = np.array([0,1,0,0])
         super().__init__(num_states, num_actions, num_features, P, phi, p_0, gamma, reward)
 
@@ -74,16 +74,22 @@ def plot_gail_error(env: MDP):
 def plot_ue_vs_uehat(env: MDP):
     # The following assumes the following Dataset
     D = [(0,0), (1,0)]
-    u_hat = (1/(1-env.gamma))*np.array([0.5,0.5,0,0])
+    u_hat = np.array([0.8,0.8,0,0])
     # I need two heatmaps one for env.u_E and one for u_hat
-    plt.imshow(env.u_E.reshape(2,2), cmap='hot', interpolation='nearest')
+    plt.imshow((1-env.gamma)*env.u_E.reshape(2,2), cmap='hot', interpolation='nearest')
     plt.colorbar()
     plt.title(r"$u_E$")
+    plt.gcf().get_axes()[0].set_xticks([0.5])
+    plt.gcf().get_axes()[0].set_yticks([0.5])
+    plt.grid()
     plt.savefig(f"plots/all_state/ue.pdf")
     plt.clf()
     plt.imshow(u_hat.reshape(2,2), cmap='hot', interpolation='nearest')
     plt.colorbar()
     plt.title(r"$\hat{u}_e$")
+    plt.gcf().get_axes()[0].set_xticks([0.5])
+    plt.gcf().get_axes()[0].set_yticks([0.5])
+    plt.grid()
     plt.savefig(f"plots/all_state/uehat.pdf")
     plt.clf()
 
@@ -99,7 +105,7 @@ def main():
     plt.rcParams["font.family"] = "serif"
     # increase font size
     plt.rcParams.update({'font.size': 16})
-    plt.figure(figsize=(6.7, 5.1))
+    plt.figure(figsize=(5.2, 4.8))
     plt.rc('text', usetex=True)
     plot_ue_vs_uehat(env)
     # plot_lpal_error(env)
