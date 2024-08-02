@@ -71,6 +71,22 @@ def plot_gail_error(env: MDP):
     plt.savefig(f"plots/all_state/gail_loss.pdf")
     plt.clf()
 
+def plot_ue_vs_uehat(env: MDP):
+    # The following assumes the following Dataset
+    D = [(0,0), (1,0)]
+    u_hat = (1/(1-env.gamma))*np.array([0.5,0.5,0,0])
+    # I need two heatmaps one for env.u_E and one for u_hat
+    plt.imshow(env.u_E.reshape(2,2), cmap='hot', interpolation='nearest')
+    plt.colorbar()
+    plt.title(r"$u_E$")
+    plt.savefig(f"plots/all_state/ue.pdf")
+    plt.clf()
+    plt.imshow(u_hat.reshape(2,2), cmap='hot', interpolation='nearest')
+    plt.colorbar()
+    plt.title(r"$\hat{u}_e$")
+    plt.savefig(f"plots/all_state/uehat.pdf")
+    plt.clf()
+
 def main():
     env = TwoState()
     print(f"Opt policy = {env.opt_policy}")
@@ -85,8 +101,9 @@ def main():
     plt.rcParams.update({'font.size': 16})
     plt.figure(figsize=(6.7, 5.1))
     plt.rc('text', usetex=True)
-    plot_lpal_error(env)
-    plot_gail_error(env)
+    plot_ue_vs_uehat(env)
+    # plot_lpal_error(env)
+    # plot_gail_error(env)
 
 if __name__ == "__main__":
     main()
