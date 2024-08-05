@@ -73,19 +73,19 @@ def plot_gail_error(env: MDP):
 
 def plot_ue_vs_uehat(env: MDP):
     # The following assumes the following Dataset
-    D = [(0,0), (1,0)]
-    u_hat = np.array([0.8,0.8,0,0])
+    D = [(0,1), (1,0)]
+    u_hat = (1/(1-env.gamma)) * np.array([0.0,0.5,0.5,0])
     # I need two heatmaps one for env.u_E and one for u_hat
-    plt.imshow((1-env.gamma)*env.u_E.reshape(2,2), cmap='hot', interpolation='nearest')
-    plt.colorbar()
+    plt.imshow((1-env.gamma)*env.u_E.reshape(2,2), cmap='gray', interpolation='nearest')
+    # plt.colorbar()
     plt.title(r"$u_E$")
     plt.gcf().get_axes()[0].set_xticks([0.5])
     plt.gcf().get_axes()[0].set_yticks([0.5])
     plt.grid()
     plt.savefig(f"plots/all_state/ue.pdf")
     plt.clf()
-    plt.imshow(u_hat.reshape(2,2), cmap='hot', interpolation='nearest')
-    plt.colorbar()
+    plt.imshow(u_hat.reshape(2,2), cmap='gray', interpolation='nearest')
+    # plt.colorbar()
     plt.title(r"$\hat{u}_e$")
     plt.gcf().get_axes()[0].set_xticks([0.5])
     plt.gcf().get_axes()[0].set_yticks([0.5])
