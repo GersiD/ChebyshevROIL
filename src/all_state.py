@@ -80,7 +80,7 @@ def plot_ue_vs_uehat(env: MDP):
     # I need two heatmaps one for env.u_E and one for u_hat
     plt.imshow((1-env.gamma)*env.u_E.reshape(2,2), cmap='GnBu', interpolation='nearest')
     # plt.colorbar()
-    plt.title(r"$\pi_e$")
+    plt.title(r"$u_e$")
     plt.gcf().get_axes()[0].set_xticks([])
     plt.gcf().get_axes()[0].set_yticks([])
     plt.gcf().get_axes()[0].text(0.25, 0.75, r"$(s_1, a_1)$", fontsize=30, ha='center', va='center', color="black", transform=plt.gcf().get_axes()[0].transAxes)
@@ -92,7 +92,7 @@ def plot_ue_vs_uehat(env: MDP):
     plt.clf()
     plt.imshow(u_hat.reshape(2,2), cmap='GnBu', interpolation='nearest')
     # plt.colorbar()
-    plt.title(r"$\hat{\pi}_e$")
+    plt.title(r"$\hat{u}_e$")
     plt.gcf().get_axes()[0].set_xticks([])
     plt.gcf().get_axes()[0].set_yticks([])
     plt.gcf().get_axes()[0].text(0.25, 0.75, r"$(s_1, a_1)$", fontsize=30, ha='center', va='center', color="black", transform=plt.gcf().get_axes()[0].transAxes)
